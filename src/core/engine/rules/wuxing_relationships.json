@@ -1,0 +1,59 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "五行生克制化关系规则",
+    "source": ["渊海子平", "五行大义"],
+    "last_updated": "2026-02-22"
+  },
+  "sheng": {
+    "description": "五行相生",
+    "rules": [
+      {"from": "木", "to": "火", "description": "木生火"},
+      {"from": "火", "to": "土", "description": "火生土"},
+      {"from": "土", "to": "金", "description": "土生金"},
+      {"from": "金", "to": "水", "description": "金生水"},
+      {"from": "水", "to": "木", "description": "水生木"}
+    ]
+  },
+  "ke": {
+    "description": "五行相克",
+    "rules": [
+      {"from": "木", "to": "土", "description": "木克土"},
+      {"from": "土", "to": "水", "description": "土克水"},
+      {"from": "水", "to": "火", "description": "水克火"},
+      {"from": "火", "to": "金", "description": "火克金"},
+      {"from": "金", "to": "木", "description": "金克木"}
+    ]
+  },
+  "chong": {
+    "description": "六冲",
+    "rules": [
+      {"dizhi1": "子", "dizhi2": "午", "description": "子午冲"},
+      {"dizhi1": "丑", "dizhi2": "未", "description": "丑未冲"},
+      {"dizhi1": "寅", "dizhi2": "申", "description": "寅申冲"},
+      {"dizhi1": "卯", "dizhi2": "酉", "description": "卯酉冲"},
+      {"dizhi1": "辰", "dizhi2": "戌", "description": "辰戌冲"},
+      {"dizhi1": "巳", "dizhi2": "亥", "description": "巳亥冲"}
+    ]
+  },
+  "he": {
+    "description": "六合",
+    "rules": [
+      {"dizhi1": "子", "dizhi2": "丑", "description": "子丑合土"},
+      {"dizhi1": "寅", "dizhi2": "亥", "description": "寅亥合木"},
+      {"dizhi1": "卯", "dizhi2": "戌", "description": "卯戌合火"},
+      {"dizhi1": "辰", "dizhi2": "酉", "description": "辰酉合金"},
+      {"dizhi1": "巳", "dizhi2": "申", "description": "巳申合水"},
+      {"dizhi1": "午", "dizhi2": "未", "description": "午未合土"}
+    ]
+  },
+  "sanheliu": {
+    "description": "三合局",
+    "rules": [
+      {"dizhi": ["申", "子", "辰"], "result": "水", "description": "申子辰合水局"},
+      {"dizhi": ["亥", "卯", "未"], "result": "木", "description": "亥卯未合木局"},
+      {"dizhi": ["寅", "午", "戌"], "result": "火", "description": "寅午戌合火局"},
+      {"dizhi": ["巳", "酉", "丑"], "result": "金", "description": "巳酉丑合金局"}
+    ]
+  }
+}

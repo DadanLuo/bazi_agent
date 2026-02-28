@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "流年分析规则 - 基于《三命通会》《滴天髓》",
+    "source": ["三命通会", "滴天髓", "穷通宝鉴"],
+    "last_updated": "2026-02-22"
+  },
+  "liuchong": {
+    "description": "流年冲克规则",
+    "rules": [
+      {"dizhi1": "子", "dizhi2": "午", "type": "冲", "severity": "重"},
+      {"dizhi1": "丑", "dizhi2": "未", "type": "冲", "severity": "重"},
+      {"dizhi1": "寅", "dizhi2": "申", "type": "冲", "severity": "重"},
+      {"dizhi1": "卯", "dizhi2": "酉", "type": "冲", "severity": "重"},
+      {"dizhi1": "辰", "dizhi2": "戌", "type": "冲", "severity": "重"},
+      {"dizhi1": "巳", "dizhi2": "亥", "type": "冲", "severity": "重"},
+      {"dizhi1": "子", "dizhi2": "子", "type": "刑", "severity": "中"},
+      {"dizhi1": "午", "dizhi2": "午", "type": "刑", "severity": "中"},
+      {"dizhi1": "辰", "dizhi2": "辰", "type": "刑", "severity": "中"},
+      {"dizhi1": "酉", "dizhi2": "酉", "type": "刑", "severity": "中"}
+    ]
+  },
+  "liuhe": {
+    "description": "流年六合规则",
+    "rules": [
+      {"dizhi1": "子", "dizhi2": "丑", "result": "土", "effect": "吉"},
+      {"dizhi1": "寅", "dizhi2": "亥", "result": "木", "effect": "吉"},
+      {"dizhi1": "卯", "dizhi2": "戌", "result": "火", "effect": "吉"},
+      {"dizhi1": "辰", "dizhi2": "酉", "result": "金", "effect": "吉"},
+      {"dizhi1": "巳", "dizhi2": "申", "result": "水", "effect": "吉"},
+      {"dizhi1": "午", "dizhi2": "未", "result": "土", "effect": "吉"}
+    ]
+  },
+  "sanhe": {
+    "description": "流年三合规则",
+    "rules": [
+      {"dizhi": ["申", "子", "辰"], "result": "水", "effect": "吉"},
+      {"dizhi": ["亥", "卯", "未"], "result": "木", "effect": "吉"},
+      {"dizhi": ["寅", "午", "戌"], "result": "火", "effect": "吉"},
+      {"dizhi": ["巳", "酉", "丑"], "result": "金", "effect": "吉"}
+    ]
+  },
+  "tainigan": {
+    "description": "太岁流年吉凶判断",
+    "rules": [
+      {
+        "name": "值太岁",
+        "condition": "流年地支与出生年地支相同",
+        "effect": "伏吟，多变动",
+        "severity": "中"
+      },
+      {
+        "name": "冲太岁",
+        "condition": "流年地支与出生年地支相冲",
+        "effect": "冲撞，多波折",
+        "severity": "重"
+      },
+      {
+        "name": "害太岁",
+        "condition": "流年地支与出生年地支相害",
+        "effect": "陷害，多小人",
+        "severity": "轻"
+      },
+      {
+        "name": "破太岁",
+        "condition": "流年地支与出生年地支相破",
+        "effect": "破坏，多损耗",
+        "severity": "轻"
+      },
+      {
+        "name": "合太岁",
+        "condition": "流年地支与出生年地支相合",
+        "effect": "和合，多机遇",
+        "severity": "吉"
+      }
+    ]
+  },
+  "shishen_liunian": {
+    "description": "流年十神吉凶",
+    "rules": {
+      "正官": {"ji": true, "description": "事业顺利，有贵人相助"},
+      "七杀": {"ji": false, "description": "压力较大，需防小人"},
+      "正印": {"ji": true, "description": "学业进步，有长辈扶持"},
+      "偏印": {"ji": false, "description": "思维独特，但易孤独"},
+      "正财": {"ji": true, "description": "财运稳定，收入增加"},
+      "偏财": {"ji": true, "description": "偏财机遇，但需防破财"},
+      "食神": {"ji": true, "description": "才华展现，心情愉悦"},
+      "伤官": {"ji": false, "description": "易惹是非，需谨言慎行"},
+      "比肩": {"ji": true, "description": "朋友相助，合作顺利"},
+      "劫财": {"ji": false, "description": "财运波动，需防破财"}
+    }
+  }
+}

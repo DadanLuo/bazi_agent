@@ -1,0 +1,239 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "地支藏干规则 - 包含本气、中气、余气及其权重",
+    "source": ["渊海子平", "三命通会", "子平真诠"],
+    "note": "不同流派藏干权重略有差异，此处采用主流格局派标准",
+    "last_updated": "2026-02-22"
+  },
+  "canggan": [
+    {
+      "dizhi": "子",
+      "cangans": [
+        {
+          "tiangan": "癸",
+          "type": "本气",
+          "weight": 100,
+          "description": "子中独藏癸水"
+        }
+      ]
+    },
+    {
+      "dizhi": "丑",
+      "cangans": [
+        {
+          "tiangan": "己",
+          "type": "本气",
+          "weight": 60,
+          "description": "丑土本气"
+        },
+        {
+          "tiangan": "癸",
+          "type": "中气",
+          "weight": 25,
+          "description": "丑为金库，含水气"
+        },
+        {
+          "tiangan": "辛",
+          "type": "余气",
+          "weight": 15,
+          "description": "丑为金库"
+        }
+      ]
+    },
+    {
+      "dizhi": "寅",
+      "cangans": [
+        {
+          "tiangan": "甲",
+          "type": "本气",
+          "weight": 60,
+          "description": "寅木本气"
+        },
+        {
+          "tiangan": "丙",
+          "type": "中气",
+          "weight": 25,
+          "description": "寅中藏丙火长生"
+        },
+        {
+          "tiangan": "戊",
+          "type": "余气",
+          "weight": 15,
+          "description": "寅中藏戊土"
+        }
+      ]
+    },
+    {
+      "dizhi": "卯",
+      "cangans": [
+        {
+          "tiangan": "乙",
+          "type": "本气",
+          "weight": 100,
+          "description": "卯中独藏乙木"
+        }
+      ]
+    },
+    {
+      "dizhi": "辰",
+      "cangans": [
+        {
+          "tiangan": "戊",
+          "type": "本气",
+          "weight": 60,
+          "description": "辰土本气"
+        },
+        {
+          "tiangan": "乙",
+          "type": "中气",
+          "weight": 25,
+          "description": "辰为水库，含木气"
+        },
+        {
+          "tiangan": "癸",
+          "type": "余气",
+          "weight": 15,
+          "description": "辰为水库"
+        }
+      ]
+    },
+    {
+      "dizhi": "巳",
+      "cangans": [
+        {
+          "tiangan": "丙",
+          "type": "本气",
+          "weight": 60,
+          "description": "巳火本气"
+        },
+        {
+          "tiangan": "庚",
+          "type": "中气",
+          "weight": 25,
+          "description": "巳中藏庚金长生"
+        },
+        {
+          "tiangan": "戊",
+          "type": "余气",
+          "weight": 15,
+          "description": "巳中藏戊土"
+        }
+      ]
+    },
+    {
+      "dizhi": "午",
+      "cangans": [
+        {
+          "tiangan": "丁",
+          "type": "本气",
+          "weight": 60,
+          "description": "午火本气"
+        },
+        {
+          "tiangan": "己",
+          "type": "中气",
+          "weight": 40,
+          "description": "午中藏己土"
+        }
+      ]
+    },
+    {
+      "dizhi": "未",
+      "cangans": [
+        {
+          "tiangan": "己",
+          "type": "本气",
+          "weight": 60,
+          "description": "未土本气"
+        },
+        {
+          "tiangan": "丁",
+          "type": "中气",
+          "weight": 25,
+          "description": "未为木库，含火气"
+        },
+        {
+          "tiangan": "乙",
+          "type": "余气",
+          "weight": 15,
+          "description": "未为木库"
+        }
+      ]
+    },
+    {
+      "dizhi": "申",
+      "cangans": [
+        {
+          "tiangan": "庚",
+          "type": "本气",
+          "weight": 60,
+          "description": "申金本气"
+        },
+        {
+          "tiangan": "壬",
+          "type": "中气",
+          "weight": 25,
+          "description": "申中藏壬水长生"
+        },
+        {
+          "tiangan": "戊",
+          "type": "余气",
+          "weight": 15,
+          "description": "申中藏戊土"
+        }
+      ]
+    },
+    {
+      "dizhi": "酉",
+      "cangans": [
+        {
+          "tiangan": "辛",
+          "type": "本气",
+          "weight": 100,
+          "description": "酉中独藏辛金"
+        }
+      ]
+    },
+    {
+      "dizhi": "戌",
+      "cangans": [
+        {
+          "tiangan": "戊",
+          "type": "本气",
+          "weight": 60,
+          "description": "戌土本气"
+        },
+        {
+          "tiangan": "辛",
+          "type": "中气",
+          "weight": 25,
+          "description": "戌为火库，含金气"
+        },
+        {
+          "tiangan": "丁",
+          "type": "余气",
+          "weight": 15,
+          "description": "戌为火库"
+        }
+      ]
+    },
+    {
+      "dizhi": "亥",
+      "cangans": [
+        {
+          "tiangan": "壬",
+          "type": "本气",
+          "weight": 60,
+          "description": "亥水本气"
+        },
+        {
+          "tiangan": "甲",
+          "type": "中气",
+          "weight": 40,
+          "description": "亥中藏甲木长生"
+        }
+      ]
+    }
+  ]
+}

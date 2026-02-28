@@ -1,0 +1,110 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "十天干五行属性规则",
+    "source": ["渊海子平", "三命通会"],
+    "last_updated": "2026-02-22"
+  },
+  "tiangan": [
+    {
+      "name": "甲",
+      "pinyin": "jiǎ",
+      "wuxing": "木",
+      "yinyang": "阳",
+      "direction": "东",
+      "season": "春",
+      "body_part": "胆、头",
+      "description": "甲木为参天大树，阳木之象"
+    },
+    {
+      "name": "乙",
+      "pinyin": "yǐ",
+      "wuxing": "木",
+      "yinyang": "阴",
+      "direction": "东",
+      "season": "春",
+      "body_part": "肝、颈",
+      "description": "乙木为花草藤蔓，阴木之象"
+    },
+    {
+      "name": "丙",
+      "pinyin": "bǐng",
+      "wuxing": "火",
+      "yinyang": "阳",
+      "direction": "南",
+      "season": "夏",
+      "body_part": "小肠、肩",
+      "description": "丙火为太阳之火，阳火之象"
+    },
+    {
+      "name": "丁",
+      "pinyin": "dīng",
+      "wuxing": "火",
+      "yinyang": "阴",
+      "direction": "南",
+      "season": "夏",
+      "body_part": "心、胸",
+      "description": "丁火为灯烛之火，阴火之象"
+    },
+    {
+      "name": "戊",
+      "pinyin": "wù",
+      "wuxing": "土",
+      "yinyang": "阳",
+      "direction": "中",
+      "season": "季夏",
+      "body_part": "胃、肋",
+      "description": "戊土为城墙之土，阳土之象"
+    },
+    {
+      "name": "己",
+      "pinyin": "jǐ",
+      "wuxing": "土",
+      "yinyang": "阴",
+      "direction": "中",
+      "season": "季夏",
+      "body_part": "脾、腹",
+      "description": "己土为田园之土，阴土之象"
+    },
+    {
+      "name": "庚",
+      "pinyin": "gēng",
+      "wuxing": "金",
+      "yinyang": "阳",
+      "direction": "西",
+      "season": "秋",
+      "body_part": "大肠、脐",
+      "description": "庚金为刀剑之金，阳金之象"
+    },
+    {
+      "name": "辛",
+      "pinyin": "xīn",
+      "wuxing": "金",
+      "yinyang": "阴",
+      "direction": "西",
+      "season": "秋",
+      "body_part": "肺、股",
+      "description": "辛金为珠玉之金，阴金之象"
+    },
+    {
+      "name": "壬",
+      "pinyin": "rén",
+      "wuxing": "水",
+      "yinyang": "阳",
+      "direction": "北",
+      "season": "冬",
+      "body_part": "膀胱、胫",
+      "description": "壬水为江河之水，阳水之象"
+    },
+    {
+      "name": "癸",
+      "pinyin": "guǐ",
+      "wuxing": "水",
+      "yinyang": "阴",
+      "direction": "北",
+      "season": "冬",
+      "body_part": "肾、足",
+      "description": "癸水为雨露之水，阴水之象"
+    }
+  ]
+}

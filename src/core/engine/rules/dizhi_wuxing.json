@@ -1,0 +1,154 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "十二地支五行属性规则",
+    "source": ["渊海子平", "三命通会"],
+    "last_updated": "2026-02-22"
+  },
+  "dizhi": [
+    {
+      "name": "子",
+      "pinyin": "zǐ",
+      "wuxing": "水",
+      "yinyang": "阳",
+      "zodiac": "鼠",
+      "month": 11,
+      "season": "冬",
+      "direction": "北",
+      "time": "23:00-01:00",
+      "description": "子水为江河湖海之水"
+    },
+    {
+      "name": "丑",
+      "pinyin": "chǒu",
+      "wuxing": "土",
+      "yinyang": "阴",
+      "zodiac": "牛",
+      "month": 12,
+      "season": "冬",
+      "direction": "东北",
+      "time": "01:00-03:00",
+      "description": "丑土为湿土、寒土"
+    },
+    {
+      "name": "寅",
+      "pinyin": "yín",
+      "wuxing": "木",
+      "yinyang": "阳",
+      "zodiac": "虎",
+      "month": 1,
+      "season": "春",
+      "direction": "东北",
+      "time": "03:00-05:00",
+      "description": "寅木为参天大树"
+    },
+    {
+      "name": "卯",
+      "pinyin": "mǎo",
+      "wuxing": "木",
+      "yinyang": "阴",
+      "zodiac": "兔",
+      "month": 2,
+      "season": "春",
+      "direction": "东",
+      "time": "05:00-07:00",
+      "description": "卯木为花草灌木"
+    },
+    {
+      "name": "辰",
+      "pinyin": "chén",
+      "wuxing": "土",
+      "yinyang": "阳",
+      "zodiac": "龙",
+      "month": 3,
+      "season": "春",
+      "direction": "东南",
+      "time": "07:00-09:00",
+      "description": "辰土为湿土、水库"
+    },
+    {
+      "name": "巳",
+      "pinyin": "sì",
+      "wuxing": "火",
+      "yinyang": "阴",
+      "zodiac": "蛇",
+      "month": 4,
+      "season": "夏",
+      "direction": "东南",
+      "time": "09:00-11:00",
+      "description": "巳火为炉冶之火"
+    },
+    {
+      "name": "午",
+      "pinyin": "wǔ",
+      "wuxing": "火",
+      "yinyang": "阳",
+      "zodiac": "马",
+      "month": 5,
+      "season": "夏",
+      "direction": "南",
+      "time": "11:00-13:00",
+      "description": "午火为太阳之火"
+    },
+    {
+      "name": "未",
+      "pinyin": "wèi",
+      "wuxing": "土",
+      "yinyang": "阴",
+      "zodiac": "羊",
+      "month": 6,
+      "season": "夏",
+      "direction": "西南",
+      "time": "13:00-15:00",
+      "description": "未土为燥土、木库"
+    },
+    {
+      "name": "申",
+      "pinyin": "shēn",
+      "wuxing": "金",
+      "yinyang": "阳",
+      "zodiac": "猴",
+      "month": 7,
+      "season": "秋",
+      "direction": "西南",
+      "time": "15:00-17:00",
+      "description": "申金为刀剑之金"
+    },
+    {
+      "name": "酉",
+      "pinyin": "yǒu",
+      "wuxing": "金",
+      "yinyang": "阴",
+      "zodiac": "鸡",
+      "month": 8,
+      "season": "秋",
+      "direction": "西",
+      "time": "17:00-19:00",
+      "description": "酉金为珠玉之金"
+    },
+    {
+      "name": "戌",
+      "pinyin": "xū",
+      "wuxing": "土",
+      "yinyang": "阳",
+      "zodiac": "狗",
+      "month": 9,
+      "season": "秋",
+      "direction": "西北",
+      "time": "19:00-21:00",
+      "description": "戌土为燥土、火库"
+    },
+    {
+      "name": "亥",
+      "pinyin": "hài",
+      "wuxing": "水",
+      "yinyang": "阴",
+      "zodiac": "猪",
+      "month": 10,
+      "season": "冬",
+      "direction": "西北",
+      "time": "21:00-23:00",
+      "description": "亥水为雨露之水"
+    }
+  ]
+}

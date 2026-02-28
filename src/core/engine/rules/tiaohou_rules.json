@@ -1,0 +1,154 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "调候用神规则 - 基于《穷通宝鉴》",
+    "source": ["穷通宝鉴"],
+    "last_updated": "2026-02-22"
+  },
+  "tiaohou": [
+    {
+      "riqian": "甲",
+      "month": "寅",
+      "yongshen": ["丙", "癸"],
+      "description": "甲木寅月，初春余寒，需丙火暖局，癸水滋润"
+    },
+    {
+      "riqian": "甲",
+      "month": "卯",
+      "yongshen": ["庚", "丁"],
+      "description": "甲木卯月，帝旺之时，需庚金修剪，丁火泄秀"
+    },
+    {
+      "riqian": "甲",
+      "month": "辰",
+      "yongshen": ["庚", "壬", "癸"],
+      "description": "甲木辰月，春深木老，需庚金劈木，壬癸水滋润"
+    },
+    {
+      "riqian": "甲",
+      "month": "巳",
+      "yongshen": ["癸", "庚"],
+      "description": "甲木巳月，火旺木焚，需癸水调候，庚金生水"
+    },
+    {
+      "riqian": "甲",
+      "month": "午",
+      "yongshen": ["癸", "庚"],
+      "description": "甲木午月，火旺木焦，需癸水滋润，庚金为源"
+    },
+    {
+      "riqian": "甲",
+      "month": "未",
+      "yongshen": ["癸", "庚"],
+      "description": "甲木未月，火气未退，需癸水调候"
+    },
+    {
+      "riqian": "甲",
+      "month": "申",
+      "yongshen": ["庚", "壬", "丁"],
+      "description": "甲木申月，金旺木凋，需壬水化金，丁火制金"
+    },
+    {
+      "riqian": "甲",
+      "month": "酉",
+      "yongshen": ["庚", "丁"],
+      "description": "甲木酉月，金旺木绝，需丁火制金"
+    },
+    {
+      "riqian": "甲",
+      "month": "戌",
+      "yongshen": ["庚", "壬"],
+      "description": "甲木戌月，土旺金相，需壬水滋润"
+    },
+    {
+      "riqian": "甲",
+      "month": "亥",
+      "yongshen": ["庚", "丙"],
+      "description": "甲木亥月，水旺木漂，需庚金制木，丙火暖局"
+    },
+    {
+      "riqian": "甲",
+      "month": "子",
+      "yongshen": ["庚", "丙"],
+      "description": "甲木子月，水旺木寒，需丙火暖局，庚金为佐"
+    },
+    {
+      "riqian": "甲",
+      "month": "丑",
+      "yongshen": ["庚", "丙", "丁"],
+      "description": "甲木丑月，天寒地冻，需丙丁火暖局"
+    },
+    {
+      "riqian": "庚",
+      "month": "寅",
+      "yongshen": ["戊", "甲", "丙"],
+      "description": "庚金寅月，金绝之地，需戊土生金，丙火暖局"
+    },
+    {
+      "riqian": "庚",
+      "month": "卯",
+      "yongshen": ["庚", "甲", "丙"],
+      "description": "庚金卯月，金囚之地，需庚金帮身"
+    },
+    {
+      "riqian": "庚",
+      "month": "辰",
+      "yongshen": ["甲", "壬", "庚"],
+      "description": "庚金辰月，土旺金相，需甲木疏土，壬水泄秀"
+    },
+    {
+      "riqian": "庚",
+      "month": "巳",
+      "yongshen": ["壬", "戊", "丙"],
+      "description": "庚金巳月，火旺金熔，需壬水调候，戊土生金"
+    },
+    {
+      "riqian": "庚",
+      "month": "午",
+      "yongshen": ["壬", "癸", "庚"],
+      "description": "庚金午月，火旺金软，需壬癸水调候，庚金帮身"
+    },
+    {
+      "riqian": "庚",
+      "month": "未",
+      "yongshen": ["壬", "庚"],
+      "description": "庚金未月，土旺金相，需壬水泄秀"
+    },
+    {
+      "riqian": "庚",
+      "month": "申",
+      "yongshen": ["丁", "甲"],
+      "description": "庚金申月，金旺之时，需丁火炼金，甲木生火"
+    },
+    {
+      "riqian": "庚",
+      "month": "酉",
+      "yongshen": ["丁", "甲", "庚"],
+      "description": "庚金酉月，金旺至极，需丁火炼金"
+    },
+    {
+      "riqian": "庚",
+      "month": "戌",
+      "yongshen": ["甲", "壬"],
+      "description": "庚金戌月，土旺金相，需甲木疏土，壬水泄秀"
+    },
+    {
+      "riqian": "庚",
+      "month": "亥",
+      "yongshen": ["丙", "戊"],
+      "description": "庚金亥月，水旺金寒，需丙火暖局，戊土制水"
+    },
+    {
+      "riqian": "庚",
+      "month": "子",
+      "yongshen": ["丙", "戊"],
+      "description": "庚金子月，水旺金寒，需丙火暖局，戊土制水"
+    },
+    {
+      "riqian": "庚",
+      "month": "丑",
+      "yongshen": ["丙", "丁", "甲"],
+      "description": "庚金丑月，天寒地冻，需丙丁火暖局"
+    }
+  ]
+}
