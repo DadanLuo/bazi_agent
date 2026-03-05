@@ -242,6 +242,78 @@ def find_yongshen_node(state: BaziAgentState) -> Dict[str, Any]:
         }
 
 
+def analyze_dayun_node(state: BaziAgentState) -> Dict[str, Any]:
+    """节点：大运分析"""
+    logger.info("=" * 30)
+    logger.info("【节点】执行大运分析...")
+
+    try:
+        from src.core.engine.dayun import DayunEngine
+        from src.core.models.bazi_models import FourPillars, Pillar, Tiangan, Dizhi
+        from datetime import datetime
+
+        bazi_result = state.get("bazi_result", {})
+        yongshen_analysis = state.get("yongshen_analysis", {})
+        birth_info = state.get("validated_input", {})
+
+        # 重建四柱对象
+        four_pillars_data = bazi_result.get("four_pillars", {})
+        pillars = FourPillars(
+            year=Pillar(
+                tiangan=Tiangan(four_pillars_data["year"]["tiangan"]),
+                dizhi=Dizhi(four_pillars_data["year"]["dizhi"])
+            ),
+            month=Pillar(
+                tiangan=Tiangan(four_pillars_data["month"]["tiangan"]),
+                dizhi=Dizhi(four_pillars_data["month"]["dizhi"])
+            ),
+            day=Pillar(
+                tiangan=Tiangan(four_pillars_data["day"]["tiangan"]),
+                dizhi=Dizhi(four_pillars_data["day"]["dizhi"])
+            ),
+            hour=Pillar(
+                tiangan=Tiangan(four_pillars_data["hour"]["tiangan"]),
+                dizhi=Dizhi(four_pillars_data["hour"]["dizhi"])
+            )
+        )
+
+        # 获取出生时间和性别
+        birth_dt = datetime(
+            birth_info["year"], birth_info["month"], birth_info["day"],
+            birth_info["hour"], birth_info.get("minute", 0)
+        )
+        gender = birth_info.get("gender", "男")
+
+        # 获取节气数据（需要从 state 或重新计算）
+        from src.core.engine.solar_terms import SolarTermsCalculator
+        solar_calc = SolarTermsCalculator()
+        year_terms = solar_calc.get_solar_terms_in_year(birth_info["year"])
+
+        # 计算当前年龄
+        current_year = datetime.now().year
+        current_age = current_year - birth_info["year"]
+
+        # 执行大运分析
+        dayun_engine = DayunEngine()
+        dayun_result = dayun_engine.analyze_dayun(
+            pillars, yongshen_analysis, birth_dt, gender, year_terms, current_age
+        )
+
+        logger.info(f"起运年龄：{dayun_result['qiyun_age']}岁，方向：{dayun_result['direction']}")
+        logger.info("✅ 大运分析完成")
+
+        return {
+            "dayun_analysis": dayun_result,
+            "status": "dayun_analyzed"
+        }
+    except Exception as e:
+        logger.error(f"❌ 大运分析失败: {e}", exc_info=True)
+        return {
+            "error": f"大运分析错误: {str(e)}",
+            "status": "dayun_analysis_failed"
+        }
+
+
 def check_liunian_node(state: BaziAgentState) -> Dict[str, Any]:
     """节点 6：流年运势分析（使用规则引擎）"""
     logger.info("=" * 30)
@@ -305,6 +377,7 @@ def check_liunian_node(state: BaziAgentState) -> Dict[str, Any]:
             "error": f"流年分析错误：{str(e)}",
             "status": "liunian_checking_failed"
         }
+
 
 
 def retrieve_knowledge_node(state: BaziAgentState) -> Dict[str, Any]:
@@ -462,3 +535,75 @@ def safety_check_node(state: BaziAgentState) -> Dict[str, Any]:
     logger.info("=" * 50)
 
     return {"safe_output": safe_output, "status": "safety_checked"}
+
+
+def analyze_dayun_node(state: BaziAgentState) -> Dict[str, Any]:
+    """节点：大运分析"""
+    logger.info("=" * 30)
+    logger.info("【节点】执行大运分析...")
+
+    try:
+        from src.core.engine.dayun import DayunEngine
+        from src.core.models.bazi_models import FourPillars, Pillar, Tiangan, Dizhi
+        from datetime import datetime
+
+        bazi_result = state.get("bazi_result", {})
+        yongshen_analysis = state.get("yongshen_analysis", {})
+        birth_info = state.get("validated_input", {})
+
+        # 重建四柱对象
+        four_pillars_data = bazi_result.get("four_pillars", {})
+        pillars = FourPillars(
+            year=Pillar(
+                tiangan=Tiangan(four_pillars_data["year"]["tiangan"]),
+                dizhi=Dizhi(four_pillars_data["year"]["dizhi"])
+            ),
+            month=Pillar(
+                tiangan=Tiangan(four_pillars_data["month"]["tiangan"]),
+                dizhi=Dizhi(four_pillars_data["month"]["dizhi"])
+            ),
+            day=Pillar(
+                tiangan=Tiangan(four_pillars_data["day"]["tiangan"]),
+                dizhi=Dizhi(four_pillars_data["day"]["dizhi"])
+            ),
+            hour=Pillar(
+                tiangan=Tiangan(four_pillars_data["hour"]["tiangan"]),
+                dizhi=Dizhi(four_pillars_data["hour"]["dizhi"])
+            )
+        )
+
+        # 获取出生时间和性别
+        birth_dt = datetime(
+            birth_info["year"], birth_info["month"], birth_info["day"],
+            birth_info["hour"], birth_info.get("minute", 0)
+        )
+        gender = birth_info.get("gender", "男")
+
+        # 获取节气数据（需要从 state 或重新计算）
+        from src.core.engine.solar_terms import SolarTermsCalculator
+        solar_calc = SolarTermsCalculator()
+        year_terms = solar_calc.get_solar_terms_in_year(birth_info["year"])
+
+        # 计算当前年龄
+        current_year = datetime.now().year
+        current_age = current_year - birth_info["year"]
+
+        # 执行大运分析
+        dayun_engine = DayunEngine()
+        dayun_result = dayun_engine.analyze_dayun(
+            pillars, yongshen_analysis, birth_dt, gender, year_terms, current_age
+        )
+
+        logger.info(f"起运年龄：{dayun_result['qiyun_age']}岁，方向：{dayun_result['direction']}")
+        logger.info("✅ 大运分析完成")
+
+        return {
+            "dayun_analysis": dayun_result,
+            "status": "dayun_analyzed"
+        }
+    except Exception as e:
+        logger.error(f"❌ 大运分析失败: {e}", exc_info=True)
+        return {
+            "error": f"大运分析错误: {str(e)}",
+            "status": "dayun_analysis_failed"
+        }

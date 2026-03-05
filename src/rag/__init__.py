@@ -1,25 +1,13 @@
-"""
-RAG 模块
-整合知识库处理与检索功能
-"""
+# src/rag/__init__.py
+"""RAG模块"""
 from .retriever import KnowledgeRetriever
-from .vector_store import VectorStore
-from .knowledge_processor import (
-    process_documents,
-    get_qwen_embeddings,
-    smart_chunk_text,
-    clean_text
-)
-from .build_knowledge_base import build_knowledge_base
+from .bm25_retriever import BM25Retriever
+from .reranker import Reranker
+from .hybrid_retriever import HybridRetriever
 
 __all__ = [
-    # 核心类
     "KnowledgeRetriever",
-    "VectorStore",
-    # 处理函数
-    "process_documents",
-    "build_knowledge_base",
-    "get_qwen_embeddings",
-    "smart_chunk_text",
-    "clean_text"
+    "BM25Retriever",
+    "Reranker",
+    "HybridRetriever"
 ]

@@ -1,7 +1,7 @@
-"""
-LLM 模块
-封装大语言模型调用逻辑
-"""
+# src/llm/__init__.py
+"""LLM模块"""
 from .dashscope_llm import DashScopeLLM
 
-__all__ = ["DashScopeLLM"]
+__all__ = [
+    "DashScopeLLM"
+]

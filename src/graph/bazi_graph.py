@@ -104,6 +104,7 @@ def create_bazi_graph() -> StateGraph:
     workflow.add_node("determine_geju", determine_geju_node)
     workflow.add_node("find_yongshen", find_yongshen_node)
     workflow.add_node("check_liunian", check_liunian_node)
+    workflow.add_node("analyze_dayun", analyze_dayun_node)
 
     # ✨ 添加新节点
     workflow.add_node("retrieve_knowledge", retrieve_knowledge_node)
@@ -171,6 +172,32 @@ def create_bazi_graph() -> StateGraph:
         }
     )
 
+    def route_after_liunian(state: BaziAgentState) -> Literal["analyze_dayun", "safety_check"]:
+        """流年分析后路由"""
+        if state.get("status", "").endswith("_failed"):
+            logger.warning("流年分析失败，跳转至安全节点")
+            return "safety_check"
+        return "analyze_dayun"
+
+    # 添加条件边
+    workflow.add_conditional_edges(
+        "check_liunian",
+        route_after_liunian,
+        {
+            "analyze_dayun": "analyze_dayun",
+            "safety_check": "safety_check"
+        }
+    )
+
+    # 大运分析后进入知识检索
+    workflow.add_conditional_edges(
+        "analyze_dayun",
+        route_after_retrieval,  # 复用之前的路由函数
+        {
+            "retrieve_knowledge": "retrieve_knowledge",
+            "safety_check": "safety_check"
+        }
+    )
     # ✨ 新增知识检索后的指向：指向 llm_generate
     workflow.add_conditional_edges(
         "retrieve_knowledge",

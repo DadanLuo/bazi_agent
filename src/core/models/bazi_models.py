@@ -91,11 +91,13 @@ class BirthInfo(BaseModel):
     month: int = Field(..., ge=1, le=12, description="出生月份")
     day: int = Field(..., ge=1, le=31, description="出生日期")
     hour: int = Field(..., ge=0, le=23, description="出生时辰（0-23）")
+    minute: int = Field(0, ge=0, le=59, description="出生分钟")
     # 严格限制为 '男' 或 '女'，避免编码问题
     gender: Literal["男", "女"] = Field(..., description="性别")
     timezone: str = Field("Asia/Shanghai", description="时区")
     latitude: Optional[float] = Field(None, description="纬度（用于真太阳时）")
     longitude: Optional[float] = Field(None, description="经度（用于真太阳时）")
+    true_solar_time: Optional[str] = Field(None, description="真太阳时校正后的精确时间")
 
 class BaziResult(BaseModel):
     """排盘最终结果"""
