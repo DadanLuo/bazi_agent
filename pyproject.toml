@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bazi-agent"
-version = "0.1.0"
-description = "赛博司命 - 基于 LangGraph 的四柱八字智能分析 Agent"
+version = "0.2.0"
+description = "赛博司命 - 基于 LangGraph 的四柱八字智能分析 Agent (v0.2.0 性能优化版)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -24,6 +24,8 @@ dependencies = [
     "uvicorn>=0.32.0",
     "python-dotenv>=1.0.0",
     "requests>=2.31.0",
+    "redis>=5.0.0",
+    "cachetools>=5.3.0",
 ]
 
 [project.optional-dependencies]

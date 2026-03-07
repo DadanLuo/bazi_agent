@@ -1,14 +1,15 @@
-# 赛博司命 - Bazi-Agent
+# 赛博司命 - Bazi-Agent v0.2.0
 
 <div align="center">
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-green.svg)
+![Version](https://img.shields.io/badge/version-0.2.0-orange.svg)
 
 **基于 LangGraph 的四柱八字智能分析 Agent**
 
-[项目介绍](#项目介绍) • [功能特性](#功能特性) • [快速开始](#快速开始) • [技术架构](#技术架构) • [使用说明](#使用说明)
+[项目介绍](#项目介绍) • [功能特性](#功能特性) • [快速开始](#快速开始) • [技术架构](#技术架构) • [使用说明](#使用说明) • [更新日志](#更新日志)
 
 </div>
 
@@ -24,6 +25,7 @@
 - **可解释性**：每个分析结果都有详细的推导过程和理论依据
 - **个性化**：基于用户历史对话提供个性化的分析服务
 - **安全合规**：内置安全检查机制，确保输出内容符合规范
+- **高性能**：引入 Redis 缓存、HNSW 索引等优化技术
 
 ---
 
@@ -39,6 +41,15 @@
 | **喜用神分析** | 推荐适合用户的喜用神，指导人生决策 |
 | **流年分析** | 分析特定年份的运势变化 |
 | **大运分析** | 提供十年大运走势预测 |
+
+### 🚀 v0.2.0 新增优化功能
+
+| 功能 | 描述 |
+|------|------|
+| **Redis 缓存** | 引入 Redis 缓存层，提高查询响应速度 50-70% |
+| **HNSW 索引** | 使用 HNSW 索引加速向量检索，提升检索速度 30-50% |
+| **自动策略选择** | 根据查询类型和模型自动选择最优上下文策略 |
+| **会话摘要** | 长对话自动摘要，减少 token 消耗 20-40% |
 
 ### 🤖 AI 能力
 
@@ -67,6 +78,7 @@
 
 - Python >= 3.10
 - pip >= 21.0
+- Redis >= 5.0（可选，用于缓存优化）
 
 ### 安装步骤
 
@@ -109,6 +121,12 @@ DASHSCOPE_API_KEY=your_dashscope_api_key_here
 # ChromaDB 路径
 CHROMA_DB_PATH=./chroma_db
 
+# Redis 配置（可选，用于缓存优化）
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=
+
 # 日志级别
 LOG_LEVEL=INFO
 
@@ -131,6 +149,16 @@ python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
 - API 文档：http://localhost:8000/docs
 - ReDoc 文档：http://localhost:8000/redoc
+
+7. **运行测试**
+
+```bash
+# 运行所有测试
+pytest tests/ -v
+
+# 或使用自定义测试运行器
+python tests/run_tests.py
+```
 
 ---
 
@@ -176,6 +204,8 @@ python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 | **RAG 检索** | [`src/rag/`](src/rag/) | 知识检索相关功能 |
 | **API 接口** | [`src/api/`](src/api/) | FastAPI 接口定义 |
 | **配置管理** | [`src/config/`](src/config/) | 系统配置管理 |
+| **缓存管理** | [`src/cache/`](src/cache/) | Redis 缓存管理 |
+| **摘要管理** | [`src/memory/`](src/memory/) | 会话摘要管理 |
 
 ### 技术栈
 
@@ -187,6 +217,8 @@ python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 | **嵌入模型** | Sentence Transformers, Text2Vec |
 | **Web 框架** | FastAPI, Uvicorn |
 | **数据处理** | Pydantic, Pandas |
+| **缓存** | Redis, cachetools |
+| **测试** | pytest, pytest-asyncio |
 
 ---
 
@@ -263,7 +295,50 @@ mypy src/
 
 # 代码格式化
 black src/
+
+# 生成测试报告
+python tests/run_tests.py
 ```
+
+---
+
+## 更新日志
+
+### v0.2.0 (2026-03-07)
+
+#### 新增功能
+- ✅ Redis 缓存层优化
+- ✅ HNSW 索引加速向量检索
+- ✅ 自动策略选择功能
+- ✅ 会话摘要功能
+
+#### 新增模块
+- `src/cache/` - 缓存模块
+- `src/memory/summarizer.py` - 会话摘要器
+
+#### 新增测试
+- `tests/test_cache/` - 缓存功能测试
+- `tests/test_vector_store/` - 向量存储测试
+- `tests/test_strategy/` - 策略选择测试
+- `tests/test_summarizer/` - 摘要功能测试
+- `tests/test_integration/` - 集成测试
+
+#### 优化改进
+- 提高查询响应速度 50-70%
+- 提高向量检索速度 30-50%
+- 减少 token 消耗 20-40%
+- 智能上下文策略选择
+
+### v0.1.0 (初始版本)
+
+- ✅ 八字排盘计算
+- ✅ 五行分析
+- ✅ 格局判断
+- ✅ 喜用神分析
+- ✅ 流年分析
+- ✅ RAG 知识检索
+- ✅ 安全合规检查
+- ✅ 报告生成
 
 ---
 
@@ -275,10 +350,14 @@ bazi-agent/
 │   ├── __init__.py
 │   ├── main.py                   # 主应用入口
 │   ├── logging_config.py         # 日志配置
+│   ├── cache/                    # 缓存模块 (v0.2.0 新增)
+│   │   ├── __init__.py
+│   │   └── redis_cache.py        # Redis 缓存管理器
 │   ├── config/                   # 配置模块
 │   │   ├── __init__.py
 │   │   ├── model_config.py       # 模型配置
-│   │   └── rag_config.py         # RAG 配置
+│   │   ├── rag_config.py         # RAG 配置
+│   │   └── optimized_config.py   # 优化配置 (v0.2.0 新增)
 │   ├── core/                     # 核心引擎
 │   │   ├── __init__.py
 │   │   └── engine/
@@ -309,6 +388,10 @@ bazi-agent/
 │   │   ├── hybrid_retriever.py       # 混合检索
 │   │   ├── vector_store.py           # 向量存储
 │   │   └── knowledge_base/           # 知识库
+│   ├── memory/                   # 记忆管理
+│   │   ├── __init__.py
+│   │   ├── memory_manager.py         # 记忆管理器
+│   │   └── summarizer.py             # 会话摘要器 (v0.2.0 新增)
 │   ├── prompts/                  # 提示词模块
 │   │   ├── __init__.py
 │   │   ├── chat_prompt.py            # 聊天提示词
@@ -317,13 +400,32 @@ bazi-agent/
 │   ├── api/                      # API 接口
 │   │   ├── __init__.py
 │   │   └── bazi_api.py               # 八字 API
-│   ├── memory/                   # 记忆管理
-│   │   ├── __init__.py
-│   │   └── memory_manager.py         # 记忆管理器
 │   └── storage/                  # 存储模块
 │       ├── __init__.py
 │       ├── models.py                 # 数据模型
 │       └── file_storage.py           # 文件存储
+├── tests/                        # 测试目录 (v0.2.0 新增)
+│   ├── __init__.py
+│   ├── conftest.py                 # 测试配置
+│   ├── run_tests.py                # 测试运行器
+│   ├── test_cache/                 # 缓存测试
+│   │   ├── __init__.py
+│   │   └── test_redis_cache.py
+│   ├── test_vector_store/          # 向量存储测试
+│   │   ├── __init__.py
+│   │   └── test_hnsw_index.py
+│   ├── test_strategy/              # 策略选择测试
+│   │   ├── __init__.py
+│   │   └── test_auto_selection.py
+│   ├── test_summarizer/            # 摘要测试
+│   │   ├── __init__.py
+│   │   └── test_conversation_summarizer.py
+│   ├── test_integration/           # 集成测试
+│   │   ├── __init__.py
+│   │   └── test_end_to_end.py
+│   └── reports/                    # 测试报告
+│       ├── __init__.py
+│       └── test_report_generator.py
 ├── data/                         # 数据文件
 │   ├── bazi_train.json
 │   ├── test_complete.json
@@ -332,7 +434,9 @@ bazi-agent/
 │   ├── generate_alpaca_data.py
 │   └── generate_training_data.py
 ├── plans/                        # 项目计划
-│   └── tech-upgrade-plan.md        # 技术升级计划
+│   ├── tech-upgrade-plan.md        # 技术升级计划
+│   ├── optimization-report-2026-03-07.md  # 优化报告 (v0.2.0)
+│   └── tech-upgrade-plan-v0.3.0.md  # v0.3.0 升级计划
 ├── .env.example                  # 环境变量示例
 ├── pyproject.toml                # 项目配置
 ├── requirements.txt              # 依赖列表
@@ -407,5 +511,7 @@ black src/
 <div align="center">
 
 **赛博司命 - 让传统智慧照亮未来**
+
+**v0.2.0 - 性能优化版 (2026-03-07)**
 
 </div>

@@ -108,3 +108,115 @@ def get_model_config(model_name: str = "qwen-plus") -> ModelConfig:
 
 # 默认配置
 default_config = ModelConfig()
+
+
+class ContextStrategySelector:
+    """
+    上下文策略自动选择器
+    
+    根据查询类型和模型配置自动选择最优的上下文策略：
+    - FULL_CONTEXT: 全量上下文（大窗口模型）
+    - SLIDING_WINDOW: 滑动窗口（小窗口模型）
+    - HYBRID: 混合策略（摘要+窗口）
+    """
+    
+    # 查询类型与推荐策略映射
+    QUERY_STRATEGY_MAP = {
+        "NEW_ANALYSIS": "FULL_CONTEXT",      # 新八字分析 - 需要完整上下文
+        "FOLLOW_UP": "HYBRID",               # 追问 - 混合策略
+        "GENERAL_CHAT": "SLIDING_WINDOW",    # 一般聊天 - 滑动窗口
+        "DETAILED_EXPLANATION": "FULL_CONTEXT",  # 详细解释 - 全量上下文
+        "SUMMARY_REQUEST": "HYBRID",         # 摘要请求 - 混合策略
+    }
+    
+    # 模型推荐策略
+    MODEL_STRATEGY_MAP = {
+        "qwen-plus": "HYBRID",       # 中等窗口 - 混合策略
+        "qwen-turbo": "SLIDING_WINDOW",  # 小窗口 - 滑动窗口
+        "qwen-long": "FULL_CONTEXT",     # 大窗口 - 全量上下文
+        "deepseek-v3": "HYBRID",         # 中等窗口 - 混合策略
+        "qwen-max": "HYBRID",            # 中等窗口 - 混合策略
+    }
+    
+    @classmethod
+    def select_strategy(
+        cls,
+        query_type: str = "GENERAL_CHAT",
+        model_name: str = "qwen-plus",
+        message_count: int = 0,
+        max_messages: int = 50
+    ) -> str:
+        """
+        自动选择上下文策略
+        
+        Args:
+            query_type: 查询类型
+            model_name: 模型名称
+            message_count: 当前消息数量
+            max_messages: 最大消息数阈值
+            
+        Returns:
+            推荐的策略名称
+        """
+        # 获取模型推荐策略
+        model_strategy = cls.MODEL_STRATEGY_MAP.get(model_name, "HYBRID")
+        
+        # 获取查询类型推荐策略
+        query_strategy = cls.QUERY_STRATEGY_MAP.get(query_type, "HYBRID")
+        
+        # 如果消息数量超过阈值，优先使用滑动窗口或混合策略
+        if message_count > max_messages:
+            if model_strategy == "FULL_CONTEXT":
+                return "HYBRID"  # 大窗口模型也使用混合策略
+            return model_strategy
+        
+        # 根据查询类型和模型综合判断
+        if query_strategy == "FULL_CONTEXT" and model_strategy in ["SLIDING_WINDOW", "HYBRID"]:
+            return "HYBRID"
+        
+        return query_strategy
+    
+    @classmethod
+    def detect_query_type(cls, user_query: str) -> str:
+        """
+        检测查询类型
+        
+        Args:
+            user_query: 用户查询文本
+            
+        Returns:
+            查询类型
+        """
+        query_lower = user_query.lower()
+        
+        # 检测八字相关关键词
+        bazi_keywords = ["八字", "命理", "分析", "喜用神", "格局", "流年", "大运"]
+        if any(kw in user_query for kw in bazi_keywords):
+            if any(kw in query_lower for kw in ["请分析", "帮我分析", "我的八字"]):
+                return "NEW_ANALYSIS"
+            return "FOLLOW_UP"
+        
+        # 检测摘要相关关键词
+        summary_keywords = ["总结", "概括", "简述", "要点"]
+        if any(kw in user_query for kw in summary_keywords):
+            return "SUMMARY_REQUEST"
+        
+        return "GENERAL_CHAT"
+    
+    @classmethod
+    def get_strategy_description(cls, strategy: str) -> str:
+        """
+        获取策略描述
+        
+        Args:
+            strategy: 策略名称
+            
+        Returns:
+            策略描述
+        """
+        descriptions = {
+            "FULL_CONTEXT": "全量上下文模式 - 使用所有历史对话作为上下文",
+            "SLIDING_WINDOW": "滑动窗口模式 - 仅使用最近对话作为上下文",
+            "HYBRID": "混合模式 - 使用关键消息 + 最近消息作为上下文",
+        }
+        return descriptions.get(strategy, "未知策略")
