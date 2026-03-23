@@ -1,0 +1,127 @@
+{
+  "conversation_id": "default_20260316115935_b70c96f3",
+  "user_id": "default",
+  "created_at": "2026-03-16T11:59:35.917580",
+  "messages": [],
+  "bazi_data": {
+    "four_pillars": {
+      "year": {
+        "tiangan": "壬",
+        "dizhi": "午"
+      },
+      "month": {
+        "tiangan": "辛",
+        "dizhi": "丑"
+      },
+      "day": {
+        "tiangan": "癸",
+        "dizhi": "丑"
+      },
+      "hour": {
+        "tiangan": "癸",
+        "dizhi": "亥"
+      }
+    },
+    "geju": "七杀格",
+    "yongshen": [
+      "金",
+      "水",
+      "火"
+    ],
+    "full_data": {
+      "birth_info": {
+        "year": 2002,
+        "month": 10,
+        "day": 12,
+        "hour": 21,
+        "minute": 34,
+        "gender": "男",
+        "timezone": "Asia/Shanghai",
+        "latitude": null,
+        "longitude": null,
+        "true_solar_time": null
+      },
+      "four_pillars": {
+        "year": {
+          "tiangan": "壬",
+          "dizhi": "午"
+        },
+        "month": {
+          "tiangan": "辛",
+          "dizhi": "丑"
+        },
+        "day": {
+          "tiangan": "癸",
+          "dizhi": "丑"
+        },
+        "hour": {
+          "tiangan": "癸",
+          "dizhi": "亥"
+        }
+      },
+      "wuxing_score": {
+        "mu": 40,
+        "huo": 60,
+        "tu": 172,
+        "jin": 133,
+        "shui": 415
+      },
+      "dayun": [
+        {
+          "start_age": 1,
+          "pillar": {
+            "tiangan": "壬",
+            "dizhi": "寅"
+          }
+        },
+        {
+          "start_age": 11,
+          "pillar": {
+            "tiangan": "癸",
+            "dizhi": "卯"
+          }
+        },
+        {
+          "start_age": 21,
+          "pillar": {
+            "tiangan": "甲",
+            "dizhi": "辰"
+          }
+        },
+        {
+          "start_age": 31,
+          "pillar": {
+            "tiangan": "乙",
+            "dizhi": "巳"
+          }
+        },
+        {
+          "start_age": 41,
+          "pillar": {
+            "tiangan": "丙",
+            "dizhi": "午"
+          }
+        },
+        {
+          "start_age": 51,
+          "pillar": {
+            "tiangan": "丁",
+            "dizhi": "未"
+          }
+        },
+        {
+          "start_age": 61,
+          "pillar": {
+            "tiangan": "戊",
+            "dizhi": "申"
+          }
+        },
+        {
+          "start_age": 71,
+          "pillar": {
+            "tiangan": "己",
+            "dizhi": "酉"
+          }
+        }
+      ],
+      "calculate_time": 

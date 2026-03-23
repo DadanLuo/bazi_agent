@@ -1,0 +1,19 @@
+{
+  "conversation_id": "default_20260315215605_284ff084",
+  "user_id": "default",
+  "created_at": "2026-03-15T21:56:05.347601",
+  "messages": [
+    {
+      "role": "user",
+      "content": "请分析我的八字：1990年1月1日12时",
+      "timestamp": "2026-03-15T21:56:05.352946"
+    },
+    {
+      "role": "assistant",
+      "content": "...",
+      "timestamp": "2026-03-15T21:56:05.352946"
+    }
+  ],
+  "bazi_data": null,
+  "analysis_summary": null
+}

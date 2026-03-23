@@ -1,0 +1,141 @@
+{
+  "conversation_id": "default_20260316142449_080cce55",
+  "user_id": "default",
+  "created_at": "2026-03-16T14:24:49.359000",
+  "messages": [],
+  "bazi_data": {
+    "four_pillars": {
+      "year": {
+        "tiangan": "壬",
+        "dizhi": "午"
+      },
+      "month": {
+        "tiangan": "庚",
+        "dizhi": "戌"
+      },
+      "day": {
+        "tiangan": "癸",
+        "dizhi": "丑"
+      },
+      "hour": {
+        "tiangan": "壬",
+        "dizhi": "戌"
+      }
+    },
+    "geju": "正官格",
+    "yongshen": [
+      "金",
+      "水",
+      "土"
+    ],
+    "full_data": {
+      "birth_info": {
+        "year": 2002,
+        "month": 10,
+        "day": 12,
+        "hour": 21,
+        "minute": 5,
+        "gender": "男",
+        "timezone": "Asia/Shanghai",
+        "latitude": 30.7,
+        "longitude": 104.1,
+        "true_solar_time": null
+      },
+      "four_pillars": {
+        "year": {
+          "tiangan": "壬",
+          "dizhi": "午"
+        },
+        "month": {
+          "tiangan": "庚",
+          "dizhi": "戌"
+        },
+        "day": {
+          "tiangan": "癸",
+          "dizhi": "丑"
+        },
+        "hour": {
+          "tiangan": "壬",
+          "dizhi": "戌"
+        }
+      },
+      "wuxing_score": {
+        "mu": 0,
+        "huo": 93,
+        "tu": 232,
+        "jin": 170,
+        "shui": 325
+      },
+      "dayun": [
+        {
+          "start_age": 9,
+          "pillar": {
+            "tiangan": "辛",
+            "dizhi": "亥"
+          }
+        },
+        {
+          "start_age": 19,
+          "pillar": {
+            "tiangan": "壬",
+            "dizhi": "子"
+          }
+        },
+        {
+          "start_age": 29,
+          "pillar": {
+            "tiangan": "癸",
+            "dizhi": "丑"
+          }
+        },
+        {
+          "start_age": 39,
+          "pillar": {
+            "tiangan": "甲",
+            "dizhi": "寅"
+          }
+        },
+        {
+          "start_age": 49,
+          "pillar": {
+            "tiangan": "乙",
+            "dizhi": "卯"
+          }
+        },
+        {
+          "start_age": 59,
+          "pillar": {
+            "tiangan": "丙",
+            "dizhi": "辰"
+          }
+        },
+        {
+          "start_age": 69,
+          "pillar": {
+            "tiangan": "丁",
+            "dizhi": "巳"
+          }
+        },
+        {
+          "start_age": 79,
+          "pillar": {
+            "tiangan": "戊",
+            "dizhi": "午"
+          }
+        }
+      ],
+      "time_info": {
+        "original_time": "2002-10-12 21:05",
+        "dst_applied": false,
+        "dst_offset_hours": 0,
+        "dst_corrected_time": null,
+        "true_solar_time_offset_min": -49.4,
+        "adjusted_time": "2002-10-12 20:15",
+        "longitude_used": 104.1,
+        "latitude_used": 30.7
+      },
+      "calculate_time": "2026-03-16 14:24:49.363623"
+    }
+  },
+  "analysis_summary": null
+}

@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赛博司命 - 八字分析系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei',sans-serif;background:#0f0c29;color:#e0e0e0;min-height:100vh}
+.header{text-align:center;padding:20px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-bottom:2px solid #e94560}
+.header h1{font-size:2em;color:#e94560;margin-bottom:5px}
+.header p{color:#888;font-size:.9em}
+.main{display:grid;grid-template-columns:320px 1fr 340px;gap:16px;padding:16px;max-width:1600px;margin:0 auto}
+.card{background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:20px}
+.card h2{color:#e94560;font-size:1.1em;margin-bottom:15px;padding-bottom:8px;border-bottom:1px solid #333}
+/* 表单 */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;margin-bottom:5px;color:#aaa;font-size:.85em}
+.form-group input,.form-group select{width:100%;padding:10px;background:#16213e;border:1px solid #444;border-radius:4px;color:#fff;font-size:14px}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:#e94560}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:14px;background:#e94560;color:#fff;border:none;border-radius:4px;font-size:15px;font-weight:bold;cursor:pointer;transition:.3s}
+.btn:hover{background:#c73650}
+.btn:disabled{background:#555;cursor:not-allowed}
+.btn-simple{background:#0f3460;margin-top:8px}
+.btn-simple:hover{background:#1a4a7a}
+/* 加载 */
+.loading{display:none;text-align:center;padding:30px;color:#e94560}
+.loading.active{display:block}
+.progress-bar{height:4px;background:#333;border-radius:2px;margin:10px 0;overflow:hidden}
+.progress-bar .fill{height:100%;background:#e94560;width:0;transition:width .5s}
+.step-list{font-size:.8em;color:#888;text-align:left;margin-top:10px}
+.step-list .done{color:#4caf50}
+.step-list .active{color:#e94560}
+/* 结果区 */
+.result-area{display:none}
+.result-area.active{display:block}
+/* 八字排盘 */
+.bazi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.pillar{background:linear-gradient(135deg,#e94560,#0f3460);padding:16px 8px;border-radius:8px;text-align:center}
+.pillar-label{font-size:.75em;color:rgba(255,255,255,.7);margin-bottom:6px}
+.pillar-tg{font-size:1.8em;font-weight:bold;color:#fff}
+.pillar-dz{font-size:1.8em;font-weight:bold;color:#ffd700}
+/* 五行柱状图 */
+.wx-chart{margin:15px 0}
+.wx-row{display:flex;align-items:center;margin-bottom:8px}
+.wx-label{width:30px;font-size:.9em;text-align:center}
+.wx-bar-bg{flex:1;height:22px;background:#16213e;border-radius:3px;margin:0 8px;overflow:hidden}
+.wx-bar{height:100%;border-radius:3px;transition:width .8s;display:flex;align-items:center;padding-left:8px;font-size:.75em;color:#fff}
+.wx-val{width:50px;font-size:.85em;text-align:right}
+.wx-mu{background:#4caf50}.wx-huo{background:#f44336}.wx-tu{background:#ff9800}.wx-jin{background:#9e9e9e}.wx-shui{background:#2196f3}
+/* 标签 */
+.tag{display:inline-block;padding:4px 12px;border-radius:12px;font-size:.8em;margin:3px}
+.tag-good{background:#1b5e20;color:#a5d6a7}
+.tag-bad{background:#b71c1c;color:#ef9a9a}
+.tag-info{background:#0f3460;color:#90caf9}
+/* 大运时间轴 */
+.dayun-timeline{display:flex;overflow-x:auto;gap:0;padding:10px 0}
+.dayun-item{min-width:90px;text-align:center;position:relative;padding:8px 4px}
+.dayun-item::after{content:'';position:absolute;top:38px;right:0;width:100%;height:2px;background:#333}
+.dayun-item:last-child::after{display:none}
+.dayun-dot{width:12px;height:12px;border-radius:50%;margin:0 auto 6px;border:2px solid #333}
+.dayun-item.current .dayun-dot{border-color:#e94560;background:#e94560;box-shadow:0 0 8px #e94560}
+.dayun-gz{font-size:.9em;font-weight:bold;color:#fff}
+.dayun-age{font-size:.7em;color:#888;margin-top:2px}
+.dayun-level{font-size:.7em;margin-top:2px}
+.level-daji{color:#4caf50}.level-ji{color:#8bc34a}.level-pingji{color:#ff9800}.level-ping{color:#9e9e9e}.level-xiong{color:#f44336}.level-pingxiong{color:#ff5722}
+/* LLM 报告 */
+.llm-report{background:#16213e;border-radius:6px;padding:20px;line-height:1.8;font-size:.9em;max-height:600px;overflow-y:auto}
+.llm-report h1,.llm-report h2,.llm-report h3{color:#e94560;margin:16px 0 8px}
+.llm-report h1{font-size:1.3em}.llm-report h2{font-size:1.15em}.llm-report h3{font-size:1em}
+.llm-report strong{color:#ffd700}
+.llm-report p{margin-bottom:8px}
+/* RAG 面板 */
+.rag-status{padding:8px 12px;border-radius:4px;margin-bottom:12px;font-size:.85em}
+.rag-success{background:#1b5e20;color:#a5d6a7}
+.rag-skipped{background:#e65100;color:#ffcc80}
+.rag-failed{background:#b71c1c;color:#ef9a9a}
+.rag-query{background:#16213e;padding:8px 12px;border-radius:4px;margin-bottom:6px;font-size:.85em;border-left:3px solid #e94560}
+.rag-doc{background:#16213e;border:1px solid #333;border-radius:4px;padding:12px;margin-bottom:10px}
+.rag-doc-content{font-size:.82em;color:#ccc;line-height:1.6;margin-bottom:8px;max-height:100px;overflow-y:auto}
+.rag-score-bar{height:4px;background:#333;border-radius:2px;overflow:hidden}
+.rag-score-fill{height:100%;background:#e94560;border-radius:2px}
+.rag-score-text{font-size:.7em;color:#888;margin-top:3px}
+.placeholder{text-align:center;color:#555;padding:60px 20px}
+.error{background:#b71c1c;color:#ef9a9a;padding:12px;border-radius:4px;margin-top:10px;display:none;font-size:.85em}
+.error.active{display:block}
+/* 信息行 */
+.info-row{margin-bottom:8px;font-size:.9em;line-height:1.6}
+.info-label{color:#888;display:inline-block;min-width:80px}
+/* 智能对话 */
+.chat-container{display:flex;flex-direction:column;height:420px}
+.chat-messages{flex:1;overflow-y:auto;padding:8px;background:#16213e;border-radius:6px;margin-bottom:10px}
+.chat-msg{margin-bottom:10px;display:flex;flex-direction:column}
+.chat-msg.user{align-items:flex-end}
+.chat-msg.assistant{align-items:flex-start}
+.chat-bubble{max-width:85%;padding:10px 14px;border-radius:12px;font-size:.85em;line-height:1.6;word-break:break-word}
+.chat-msg.user .chat-bubble{background:#e94560;color:#fff;border-bottom-right-radius:4px}
+.chat-msg.assistant .chat-bubble{background:#1a1a2e;color:#ddd;border:1px solid #333;border-bottom-left-radius:4px}
+.chat-input-row{display:flex;gap:8px}
+.chat-input{flex:1;padding:10px;background:#16213e;border:1px solid #444;border-radius:4px;color:#fff;font-size:14px;resize:none}
+.chat-input:focus{outline:none;border-color:#e94560}
+.chat-send{padding:10px 18px;background:#e94560;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px}
+.chat-send:hover{background:#c73650}
+.chat-send:disabled{background:#555;cursor:not-allowed}
+.chat-hint{font-size:.75em;color:#666;margin-top:6px}
+.chat-typing{color:#e94560;font-size:.8em;padding:4px 0;display:none}
+.chat-typing.active{display:block}
+/* Tab切换 */
+.tab-bar{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #333}
+.tab{flex:1;text-align:center;padding:10px 0;cursor:pointer;color:#888;font-size:.9em;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.3s}
+.tab:hover{color:#ccc}
+.tab.active{color:#e94560;border-bottom-color:#e94560;font-weight:bold}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+/* 塔罗牌卡片 */
+.tarot-cards{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:16px}
+.tarot-card{background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #444;border-radius:10px;padding:16px;width:160px;text-align:center;position:relative;transition:transform .3s,box-shadow .3s}
+.tarot-card:hover{transform:translateY(-4px);box-shadow:0 6px 20px rgba(233,69,96,.2)}
+.tarot-card.reversed{border-color:#e94560}
+.tarot-card-pos{font-size:.7em;color:#888;margin-bottom:6px;letter-spacing:1px}
+.tarot-card-name{font-size:1.1em;font-weight:bold;color:#fff;margin-bottom:4px}
+.tarot-card-name-en{font-size:.7em;color:#666;margin-bottom:8px}
+.tarot-card-orient{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.75em;margin-bottom:8px}
+.tarot-card-orient.upright{background:#1b5e20;color:#a5d6a7}
+.tarot-card-orient.reversed{background:#b71c1c;color:#ef9a9a}
+.tarot-card-keywords{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:8px}
+.tarot-card-kw{padding:2px 8px;border-radius:8px;font-size:.7em;background:#0f3460;color:#90caf9}
+.tarot-card-desc{font-size:.72em;color:#777;line-height:1.4;max-height:60px;overflow:hidden}
+.tarot-card-pos-desc{font-size:.7em;color:#e94560;margin-top:6px;font-style:italic}
+.error-countdown{font-weight:bold;color:#ffd700}
+@media(max-width:1200px){.main{grid-template-columns:1fr;max-width:700px}.tarot-card{width:140px;padding:12px}}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>赛博司命</h1>
+<p>基于 LangGraph 的智能八字分析系统 v0.2.0</p>
+</div>
+<div class="main">
+<!-- 左侧：输入表单 -->
+<div class="card">
+<div class="tab-bar">
+<div class="tab active" data-tab="bazi" onclick="switchTab('bazi')">八字分析</div>
+<div class="tab" data-tab="tarot" onclick="switchTab('tarot')">塔罗占卜</div>
+</div>
+<div class="tab-panel active" id="panelBazi">
+<form id="baziForm">
+<div class="form-group"><label>出生年份</label><input type="number" id="year" min="1900" max="2100" value="1990" required></div>
+<div class="form-row">
+<div class="form-group"><label>月份</label><input type="number" id="month" min="1" max="12" value="5" required></div>
+<div class="form-group"><label>日期</label><input type="number" id="day" min="1" max="31" value="15" required></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>时辰 (0-23)</label><input type="number" id="hour" min="0" max="23" value="14" required></div>
+<div class="form-group"><label>分钟</label><input type="number" id="minute" min="0" max="59" value="0"></div>
+</div>
+<div class="form-group"><label>性别</label><select id="gender"><option value="male">男</option><option value="female">女</option></select></div>
+<div class="form-group"><label>出生地（用于真太阳时校正）</label><select id="location" onchange="updateCoords()">
+<option value="116.4,39.9">北京</option>
+<option value="121.5,31.2">上海</option>
+<option value="113.3,23.1">广州</option>
+<option value="114.1,22.5">深圳</option>
+<option value="104.1,30.7">成都</option>
+<option value="106.6,29.6">重庆</option>
+<option value="120.2,30.3">杭州</option>
+<option value="118.8,32.1">南京</option>
+<option value="114.3,30.6">武汉</option>
+<option value="117.0,36.7">济南</option>
+<option value="113.0,28.2">长沙</option>
+<option value="108.9,34.3">西安</option>
+<option value="126.6,45.8">哈尔滨</option>
+<option value="123.4,41.8">沈阳</option>
+<option value="87.6,43.8">乌鲁木齐</option>
+<option value="91.1,29.7">拉萨</option>
+<option value="custom">自定义经纬度</option>
+</select></div>
+<div class="form-row" id="coordRow" style="display:none">
+<div class="form-group"><label>经度 (东经)</label><input type="number" id="longitude" step="0.1" value="116.4" min="73" max="135"></div>
+<div class="form-group"><label>纬度 (北纬)</label><input type="number" id="latitude" step="0.1" value="39.9" min="18" max="54"></div>
+</div>
+<div id="dstHint" style="display:none;font-size:.75em;color:#ff9800;margin-bottom:10px;padding:6px 8px;background:#2a1a00;border-radius:4px">
+⚠ 1986-1991年中国实行夏令时，系统将自动修正
+</div>
+<button type="submit" class="btn" id="btnFull">完整分析（含 RAG + LLM）</button>
+<button type="button" class="btn btn-simple" id="btnSimple">快速分析（仅排盘）</button>
+</form>
+</div>
+<div class="tab-panel" id="panelTarot">
+<form id="tarotForm">
+<div class="form-group"><label>您想占卜的问题</label><textarea id="tarotQuestion" rows="3" placeholder="例如：我最近的感情运势如何？" style="width:100%;padding:10px;background:#16213e;border:1px solid #444;border-radius:4px;color:#fff;font-size:14px;resize:vertical"></textarea></div>
+<div class="form-group"><label>牌阵选择（可选）</label><select id="tarotSpread">
+<option value="">自动推荐</option>
+<option value="single">单张牌（快速指引）</option>
+<option value="three_card">三张牌（过去/现在/未来）</option>
+<option value="five_card">五张牌（全面分析）</option>
+<option value="celtic_cross">凯尔特十字（10张深度解读）</option>
+</select></div>
+<button type="submit" class="btn" id="btnTarot">开始占卜</button>
+</form>
+</div>
+<div class="loading" id="loading">
+<p>正在分析中...（完整分析约需1-3分钟，请耐心等待）</p>
+<div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+<div class="step-list" id="stepList"></div>
+</div>
+<div class="error" id="error"></div>
+</div>
+
+<!-- 中间：分析结果 -->
+<div>
+<div class="card">
+<h2>分析结果</h2>
+<div class="placeholder" id="placeholder">请在左侧输入信息后点击分析</div>
+<div class="result-area" id="resultArea">
+<!-- 时间修正信息 -->
+<div id="timeInfoSection" style="display:none;margin-bottom:16px;padding:10px 14px;border-radius:8px;background:rgba(233,69,96,0.08);border:1px solid rgba(233,69,96,0.2)">
+<div id="timeInfoContent" style="font-size:.85em;color:#ccc;line-height:1.8"></div>
+</div>
+<!-- 八字排盘 -->
+<h2 style="color:#e94560;font-size:1em;margin-bottom:10px">四柱八字</h2>
+<div class="bazi-grid" id="baziGrid"></div>
+<!-- 五行分析 -->
+<h2 style="color:#e94560;font-size:1em;margin-bottom:10px">五行分析</h2>
+<div id="wuxingInfo"></div>
+<div class="wx-chart" id="wxChart"></div>
+<!-- 格局 + 喜用神 -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+<div><h2 style="color:#e94560;font-size:1em;margin-bottom:8px">格局判断</h2><div id="gejuInfo"></div></div>
+<div><h2 style="color:#e94560;font-size:1em;margin-bottom:8px">喜用神</h2><div id="yongshenInfo"></div></div>
+</div>
+<!-- 流年 -->
+<h2 style="color:#e94560;font-size:1em;margin-bottom:10px">流年运势</h2>
+<div id="liunianInfo" style="margin-bottom:16px"></div>
+<!-- 大运 -->
+<h2 style="color:#e94560;font-size:1em;margin-bottom:10px">大运分析</h2>
+<div id="dayunInfo" style="margin-bottom:8px"></div>
+<div class="dayun-timeline" id="dayunTimeline"></div>
+<!-- LLM 报告 -->
+<div id="llmSection" style="display:none;margin-top:20px">
+<h2 style="color:#e94560;font-size:1em;margin-bottom:10px">AI 智能分析报告</h2>
+<div class="llm-report" id="llmReport"></div>
+<button class="btn" style="margin-top:12px;background:#0f3460" onclick="saveReport()">保存报告到本地</button>
+</div>
+</div>
+<!-- 塔罗结果区 -->
+<div class="result-area" id="tarotResultArea">
+<div id="tarotSpreadName" style="margin-bottom:16px;font-size:.9em;color:#aaa"></div>
+<div class="tarot-cards" id="tarotCards"></div>
+<div id="tarotReport" style="display:none;margin-top:20px">
+<h2 style="color:#e94560;font-size:1em;margin-bottom:10px">AI 解读报告</h2>
+<div class="llm-report" id="tarotReportContent"></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 右侧：RAG 面板 -->
+<div>
+<div class="card">
+<h2>RAG 知识检索</h2>
+<div class="placeholder" id="ragPlaceholder">分析完成后显示检索结果</div>
+<div class="result-area" id="ragArea">
+<div id="ragStatus"></div>
+<h3 style="color:#aaa;font-size:.9em;margin:12px 0 8px">检索查询</h3>
+<div id="ragQueries"></div>
+<h3 style="color:#aaa;font-size:.9em;margin:12px 0 8px">检索到的古籍片段</h3>
+<div id="ragDocs"></div>
+</div>
+</div>
+<!-- 智能对话 -->
+<div class="card" style="margin-top:16px">
+<h2>智能对话</h2>
+<div class="chat-container">
+<div class="chat-messages" id="chatMessages">
+<div style="text-align:center;color:#555;padding:40px 10px;font-size:.85em">完成八字分析后，可在此追问细节<br>如：我的事业运如何？今年适合跳槽吗？</div>
+</div>
+<div class="chat-typing" id="chatTyping">AI 正在思考...</div>
+<div class="chat-input-row">
+<textarea class="chat-input" id="chatInput" rows="1" placeholder="输入追问..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+<button class="chat-send" id="chatSend" onclick="sendChat()">发送</button>
+</div>
+<div class="chat-hint" id="chatHint">基于八字分析结果进行多轮追问，支持上下文记忆</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const steps = ['输入验证','八字排盘','五行分析','格局判断','喜用神','流年分析','大运分析','知识检索(RAG)','LLM报告生成','报告组装','安全检查'];
+const tarotSteps = ['问题分析','选择牌阵','洗牌抽牌','牌面解读','综合分析','安全检查'];
+let lastResult = null; // 保存最后一次完整结果
+let currentTab = 'bazi';
+let lastTarotResult = null;
+let retryCountdownTimer = null;
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  $('panelBazi').classList.toggle('active', tab === 'bazi');
+  $('panelTarot').classList.toggle('active', tab === 'tarot');
+  if (tab === 'bazi') {
+    $('resultArea').style.display = lastResult ? 'block' : 'none';
+    $('tarotResultArea').style.display = 'none';
+    $('placeholder').style.display = lastResult ? 'none' : 'block';
+    $('placeholder').textContent = '请在左侧输入信息后点击分析';
+  } else {
+    $('resultArea').style.display = 'none';
+    $('tarotResultArea').style.display = lastTarotResult ? 'block' : 'none';
+    $('placeholder').style.display = lastTarotResult ? 'none' : 'block';
+    $('placeholder').textContent = '请在左侧输入问题后开始占卜';
+  }
+  $('chatHint').textContent = tab === 'bazi'
+    ? '基于八字分析结果进行多轮追问，支持上下文记忆'
+    : '基于塔罗占卜结果进行追问，如：这张牌代表什么？';
+}
+
+function updateCoords() {
+  const val = $('location').value;
+  if (val === 'custom') {
+    $('coordRow').style.display = 'grid';
+  } else {
+    $('coordRow').style.display = 'none';
+    const parts = val.split(',');
+    $('longitude').value = parts[0];
+    $('latitude').value = parts[1];
+  }
+}
+
+// 夏令时提示
+$('year').addEventListener('input', () => {
+  const y = +$('year').value;
+  $('dstHint').style.display = (y >= 1986 && y <= 1991) ? 'block' : 'none';
+});
+
+function getFormData() {
+  const lon = parseFloat($('longitude').value) || null;
+  const lat = parseFloat($('latitude').value) || null;
+  return {
+    year: +$('year').value, month: +$('month').value, day: +$('day').value,
+    hour: +$('hour').value, minute: +$('minute').value, gender: $('gender').value,
+    longitude: lon, latitude: lat
+  };
+}
+
+function showLoading(full) {
+  $('loading').classList.add('active');
+  $('error').classList.remove('active');
+  $('resultArea').classList.remove('active');
+  $('ragArea').classList.remove('active');
+  $('placeholder').style.display = 'none';
+  $('ragPlaceholder').style.display = full ? 'none' : 'block';
+  $('btnFull').disabled = true;
+  $('btnSimple').disabled = true;
+  if ($('btnTarot')) $('btnTarot').disabled = true;
+  $('loading').querySelector('p').textContent = '正在分析中...（完整分析约需1-3分钟，请耐心等待）';
+  const total = full ? steps.length : 7;
+  let html = '';
+  for (let i = 0; i < total; i++) html += `<div id="step${i}">${steps[i]}...</div>`;
+  $('stepList').innerHTML = html;
+  animateSteps(total);
+}
+
+function animateSteps(total) {
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i > 0) { const prev = $('step'+(i-1)); if(prev) prev.className = 'done'; }
+    const cur = $('step'+i);
+    if (cur) cur.className = 'active';
+    $('progressFill').style.width = ((i+1)/total*100)+'%';
+    i++;
+    if (i >= total) clearInterval(iv);
+  }, 800);
+}
+
+function hideLoading() {
+  $('loading').classList.remove('active');
+  $('btnFull').disabled = false;
+  $('btnSimple').disabled = false;
+  if ($('btnTarot')) $('btnTarot').disabled = false;
+}
+
+function showError(msg) {
+  $('error').innerHTML = msg;
+  $('error').classList.add('active');
+}
+
+function showTarotLoading() {
+  $('loading').classList.add('active');
+  $('error').classList.remove('active');
+  $('tarotResultArea').classList.remove('active');
+  $('placeholder').style.display = 'none';
+  $('btnTarot').disabled = true;
+  $('loading').querySelector('p').textContent = '正在占卜中...（约需30秒-1分钟）';
+  let html = '';
+  for (let i = 0; i < tarotSteps.length; i++) html += `<div id="step${i}">${tarotSteps[i]}...</div>`;
+  $('stepList').innerHTML = html;
+  animateSteps(tarotSteps.length);
+}
+
+function hideTarotLoading() {
+  $('loading').classList.remove('active');
+  $('btnTarot').disabled = false;
+}
+
+function handleHttpError(status, errData) {
+  hideLoading();
+  hideTarotLoading();
+  $('chatSend').disabled = false;
+  $('chatTyping').classList.remove('active');
+  if (status === 429 && errData) {
+    startRetryCountdown(errData.retry_after || 30);
+    return;
+  }
+  if (status === 504) {
+    showError('分析时间较长，服务器处理超时，请稍后重试');
+    return;
+  }
+  showError(errData?.message || '请求失败: ' + status);
+}
+
+function startRetryCountdown(seconds) {
+  if (retryCountdownTimer) clearInterval(retryCountdownTimer);
+  let remaining = seconds;
+  $('error').innerHTML = '请求过于频繁，请 <span class="error-countdown">' + remaining + '</span> 秒后重试';
+  $('error').classList.add('active');
+  retryCountdownTimer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(retryCountdownTimer);
+      retryCountdownTimer = null;
+      $('error').classList.remove('active');
+    } else {
+      const span = $('error').querySelector('.error-countdown');
+      if (span) span.textContent = remaining;
+    }
+  }, 1000);
+}
+
+async function analyzeTarot() {
+  const question = $('tarotQuestion').value.trim();
+  if (!question) { showError('请输入您想占卜的问题'); return; }
+  chatConversationId = null;
+  chatHistory = [];
+  $('chatMessages').innerHTML = '<div style="text-align:center;color:#555;padding:40px 10px;font-size:.85em">完成塔罗占卜后，可在此追问细节</div>';
+  showTarotLoading();
+  try {
+    const spreadType = $('tarotSpread').value;
+    let query = question;
+    if (spreadType) {
+      const spreadNames = {single:'单张',three_card:'三张',five_card:'五张',celtic_cross:'凯尔特十字'};
+      query += '（使用' + (spreadNames[spreadType] || spreadType) + '牌阵）';
+    }
+    const body = {
+      query: query,
+      user_id: 'web_user',
+      agent_type: 'tarot',
+      conversation_id: chatConversationId || undefined,
+    };
+    const res = await fetch('/api/v1/chat/chat', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null);
+      handleHttpError(res.status, errData);
+      return;
+    }
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    hideTarotLoading();
+    const data = json.data;
+    if (data.conversation_id) chatConversationId = data.conversation_id;
+    if (data.tarot_output) {
+      lastTarotResult = data.tarot_output;
+      renderTarotResult(data.tarot_output, data.response);
+    }
+    appendChatMsg('user', question);
+    if (data.response) appendChatMsg('assistant', data.response);
+  } catch(e) { hideTarotLoading(); showError(e.message); }
+}
+
+function renderTarotResult(output, response) {
+  $('tarotResultArea').classList.add('active');
+  $('placeholder').style.display = 'none';
+  const spread = output.spread || {};
+  $('tarotSpreadName').innerHTML =
+    '<span style="color:#e94560;font-weight:bold">' + escapeHtml(spread.name_cn || '塔罗占卜') + '</span>' +
+    '<span style="margin-left:8px;color:#666">' + escapeHtml(spread.description || '') + '</span>';
+  const cards = output.drawn_cards || [];
+  $('tarotCards').innerHTML = cards.map(card => {
+    const isReversed = card.orientation === 'reversed';
+    const orientCn = isReversed ? '逆位' : '正位';
+    const orientCls = isReversed ? 'reversed' : 'upright';
+    const keywords = isReversed ? (card.reversed_keywords || []) : (card.upright_keywords || []);
+    return '<div class="tarot-card ' + (isReversed ? 'reversed' : '') + '">' +
+      '<div class="tarot-card-pos">' + escapeHtml(card.position_name || '') + '</div>' +
+      '<div class="tarot-card-name">' + escapeHtml(card.card_name_cn || '') + '</div>' +
+      '<div class="tarot-card-name-en">' + escapeHtml(card.card_name_en || '') + '</div>' +
+      '<div class="tarot-card-orient ' + orientCls + '">' + orientCn + '</div>' +
+      '<div class="tarot-card-keywords">' + keywords.map(k => '<span class="tarot-card-kw">' + escapeHtml(k) + '</span>').join('') + '</div>' +
+      '<div class="tarot-card-desc">' + escapeHtml(card.description || '') + '</div>' +
+      '<div class="tarot-card-pos-desc">' + escapeHtml(card.position_description || '') + '</div>' +
+      '</div>';
+  }).join('');
+  const reportText = response || output.synthesis || '';
+  if (reportText) {
+    $('tarotReport').style.display = 'block';
+    $('tarotReportContent').innerHTML = renderMarkdown(reportText);
+  } else {
+    $('tarotReport').style.display = 'none';
+  }
+}
+
+// 统一分析入口：表单提交走 /chat
+async function analyzeBazi(mode) {
+  // mode: "full" | "simple"
+  showLoading(mode === 'full');
+  try {
+    const formData = getFormData();
+    const genderText = formData.gender === 'male' ? '男' : formData.gender === 'female' ? '女' : formData.gender;
+    const query = `请帮我分析八字：${formData.year}年${formData.month}月${formData.day}日${formData.hour}时，${genderText}`;
+
+    const body = {
+      query: query,
+      user_id: 'web_user',
+      conversation_id: chatConversationId || undefined,
+      birth_data: formData,
+      analysis_mode: mode
+    };
+
+    const res = await fetch('/api/v1/chat/chat', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null);
+      handleHttpError(res.status, errData);
+      return;
+    }
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+    hideLoading();
+
+    const data = json.data;
+
+    // 保存 conversation_id（后续 chat 复用同一会话）
+    if (data.conversation_id) {
+      chatConversationId = data.conversation_id;
+    }
+
+    // 渲染结构化排盘数据
+    if (data.bazi_output) {
+      renderResult(data.bazi_output, mode === 'full');
+    }
+
+    // 同时在 chat 面板显示
+    appendChatMsg('user', query);
+    if (data.response) {
+      appendChatMsg('assistant', data.response);
+    }
+  } catch(e) { hideLoading(); showError(e.message); }
+}
+
+$('baziForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  await analyzeBazi('full');
+});
+
+$('tarotForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  await analyzeTarot();
+});
+
+$('btnSimple').addEventListener('click', () => analyzeBazi('simple'));
+
+function renderResult(output, full) {
+  lastResult = output; // 保存完整结果
+  // output 可能是 {basic_data, llm_analysis, rag_info} 或 {basic_data, message}
+  const bd = output.basic_data || output;
+  $('resultArea').classList.add('active');
+  $('placeholder').style.display = 'none';
+
+  // 时间修正信息
+  const ti = output.time_info || {};
+  if (ti.original_time) {
+    $('timeInfoSection').style.display = 'block';
+    let html = `<div>原始输入时间：${ti.original_time}</div>`;
+    if (ti.dst_applied) {
+      html += `<div style="color:#e94560;font-weight:bold">⚠ 已自动修正夏令时（${ti.dst_offset_hours}小时）→ ${ti.dst_corrected_time}</div>`;
+    }
+    if (ti.true_solar_time_offset_min && Math.abs(ti.true_solar_time_offset_min) > 0.5) {
+      html += `<div>真太阳时偏移：${ti.true_solar_time_offset_min > 0 ? '+' : ''}${ti.true_solar_time_offset_min} 分钟（经度 ${ti.longitude_used}°）</div>`;
+    }
+    html += `<div>排盘用时：<span style="color:#4fc3f7;font-weight:bold">${ti.adjusted_time}</span></div>`;
+    $('timeInfoContent').innerHTML = html;
+  } else {
+    $('timeInfoSection').style.display = 'none';
+  }
+
+  // 八字排盘
+  const bazi = bd.bazi || {};
+  const labels = ['年柱','月柱','日柱','时柱'];
+  const keys = ['year','month','day','hour'];
+  $('baziGrid').innerHTML = keys.map((k,i) => {
+    const p = bazi[k] || {};
+    return `<div class="pillar"><div class="pillar-label">${labels[i]}</div><div class="pillar-tg">${p.tiangan||'?'}</div><div class="pillar-dz">${p.dizhi||'?'}</div></div>`;
+  }).join('');
+
+  // 五行分析
+  const wx = bd.wuxing || {};
+  const score = wx.score || {};
+  const dm = wx.day_master || {};
+  const bal = wx.balance || {};
+  $('wuxingInfo').innerHTML = `
+    <div class="info-row"><span class="info-label">日主：</span>${dm.day_master||''}（${dm.day_master_wx||''}）- ${dm.description||''}</div>
+    <div class="info-row"><span class="info-label">平衡：</span>${bal.description||''}</div>`;
+  const wxData = [
+    {name:'木',val:score.mu||0,cls:'wx-mu'},{name:'火',val:score.huo||0,cls:'wx-huo'},
+    {name:'土',val:score.tu||0,cls:'wx-tu'},{name:'金',val:score.jin||0,cls:'wx-jin'},
+    {name:'水',val:score.shui||0,cls:'wx-shui'}
+  ];
+  const maxWx = Math.max(...wxData.map(w=>w.val),1);
+  $('wxChart').innerHTML = wxData.map(w => {
+    const pct = (w.val/maxWx*100).toFixed(0);
+    return `<div class="wx-row"><div class="wx-label">${w.name}</div><div class="wx-bar-bg"><div class="wx-bar ${w.cls}" style="width:${pct}%">${w.val}</div></div><div class="wx-val">${((w.val/(score.total||820))*100).toFixed(1)}%</div></div>`;
+  }).join('');
+
+  // 格局
+  const geju = bd.geju || {};
+  $('gejuInfo').innerHTML = `<span class="tag tag-info">${geju.geju_type||'未知'}</span><div class="info-row" style="margin-top:8px">${geju.description||''}</div>`;
+
+  // 喜用神
+  const ys = bd.yongshen || {};
+  $('yongshenInfo').innerHTML = `
+    <div class="info-row"><span class="info-label">喜用：</span>${(ys.yongshen||[]).map(x=>`<span class="tag tag-good">${x}</span>`).join('')}</div>
+    <div class="info-row"><span class="info-label">忌神：</span>${(ys.jishen||[]).map(x=>`<span class="tag tag-bad">${x}</span>`).join('')}</div>
+    <div class="info-row" style="margin-top:4px;font-size:.85em;color:#aaa">${ys.reason||ys.description||''}</div>`;
+
+  // 流年
+  const ln = bd.liunian || {};
+  const jx = ln.jixiong || {};
+  $('liunianInfo').innerHTML = `
+    <div class="info-row"><span class="info-label">年份：</span>${ln.year||''}年（${ln.ganzhi||''}）<span class="tag tag-info">${ln.shishen||''}</span></div>
+    <div class="info-row"><span class="info-label">吉凶：</span><span class="tag ${jx.level=='大吉'||jx.level=='吉'?'tag-good':jx.level=='凶'||jx.level=='大凶'?'tag-bad':'tag-info'}">${jx.level||''}</span> ${jx.description||''}</div>
+    <div class="info-row"><span class="info-label">建议：</span>${(ln.advice||[]).join('；')}</div>
+    <div class="info-row" style="font-size:.85em;color:#aaa">${ln.analysis||''}</div>`;
+
+  // 大运
+  const dy = bd.dayun || {};
+  $('dayunInfo').innerHTML = `<div class="info-row"><span class="info-label">起运：</span>${dy.qiyun_age||'?'}岁，${dy.direction||''}</div>
+    <div class="info-row" style="font-size:.85em;color:#aaa">${dy.overall_analysis||''}</div>`;
+  const dyList = dy.dayun_list || [];
+  const curAge = dy.current_dayun?.pillar?.start_age;
+  $('dayunTimeline').innerHTML = dyList.map(d => {
+    const p = d.pillar?.pillar || d.pillar || {};
+    const a = d.analysis || {};
+    const isCur = d.pillar?.start_age === curAge;
+    const lvl = a.level||'';
+    const lvlCls = lvl.includes('大吉')?'level-daji':lvl.includes('吉')?'level-ji':lvl.includes('平吉')?'level-pingji':lvl.includes('凶')?'level-xiong':'level-ping';
+    return `<div class="dayun-item ${isCur?'current':''}"><div class="dayun-dot" style="background:${isCur?'#e94560':'transparent'}"></div><div class="dayun-gz">${p.tiangan||''}${p.dizhi||''}</div><div class="dayun-age">${d.age_range||''}</div><div class="dayun-level ${lvlCls}">${lvl}</div></div>`;
+  }).join('');
+
+  // LLM 报告
+  const llm = output.llm_analysis || '';
+  if (llm && !llm.includes('暂时不可用') && !llm.includes('API Key')) {
+    $('llmSection').style.display = 'block';
+    $('llmReport').innerHTML = renderMarkdown(llm);
+  } else {
+    $('llmSection').style.display = 'none';
+  }
+
+  // RAG 面板
+  const rag = output.rag_info;
+  if (rag && full) {
+    $('ragArea').classList.add('active');
+    $('ragPlaceholder').style.display = 'none';
+    const statusCls = rag.status==='success'?'rag-success':rag.status==='failed'?'rag-failed':'rag-skipped';
+    const statusText = rag.status==='success'?`检索成功，获取 ${rag.doc_count} 条知识`:rag.status==='failed'?'检索失败':'检索已跳过';
+    $('ragStatus').innerHTML = `<div class="rag-status ${statusCls}">${statusText}</div>`;
+    $('ragQueries').innerHTML = (rag.queries||[]).map(q => `<div class="rag-query">${q}</div>`).join('') || '<div style="color:#555;font-size:.85em">无检索查询</div>';
+    $('ragDocs').innerHTML = (rag.documents||[]).map(d => {
+      const dist = d.distance != null ? d.distance : 0;
+      const score = Math.max(0, (1 - dist) * 100).toFixed(0);
+      return `<div class="rag-doc"><div class="rag-doc-content">${d.content||''}</div><div class="rag-score-bar"><div class="rag-score-fill" style="width:${score}%"></div></div><div class="rag-score-text">相关度: ${score}%</div></div>`;
+    }).join('') || '<div style="color:#555;font-size:.85em">无检索结果</div>';
+  } else {
+    $('ragArea').classList.remove('active');
+    $('ragPlaceholder').style.display = full ? 'none' : 'block';
+    if (!full) $('ragPlaceholder').textContent = '快速分析模式不包含 RAG 检索';
+  }
+}
+
+function renderMarkdown(md) {
+  return md
+    .replace(/### (.*)/g, '<h3>$1</h3>')
+    .replace(/## (.*)/g, '<h2>$1</h2>')
+    .replace(/# (.*)/g, '<h1>$1</h1>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>')
+    .replace(/^/, '<p>').replace(/$/, '</p>');
+}
+
+function saveReport() {
+  if (!lastResult) return;
+  const bd = lastResult.basic_data || {};
+  const bazi = bd.bazi || {};
+  const wx = bd.wuxing || {};
+  const geju = bd.geju || {};
+  const ys = bd.yongshen || {};
+  const ln = bd.liunian || {};
+  const dy = bd.dayun || {};
+  const rag = lastResult.rag_info || {};
+
+  let md = `# 赛博司命 - 八字分析报告\n\n`;
+  md += `生成时间：${new Date().toLocaleString()}\n\n`;
+
+  // 四柱
+  md += `## 四柱八字\n\n`;
+  md += `| 年柱 | 月柱 | 日柱 | 时柱 |\n|------|------|------|------|\n`;
+  md += `| ${(bazi.year?.tiangan||'')}${(bazi.year?.dizhi||'')} | ${(bazi.month?.tiangan||'')}${(bazi.month?.dizhi||'')} | ${(bazi.day?.tiangan||'')}${(bazi.day?.dizhi||'')} | ${(bazi.hour?.tiangan||'')}${(bazi.hour?.dizhi||'')} |\n\n`;
+
+  // 五行
+  const sc = wx.score || {};
+  md += `## 五行分析\n\n`;
+  md += `- 日主：${wx.day_master?.day_master||''}（${wx.day_master?.day_master_wx||''}）- ${wx.day_master?.description||''}\n`;
+  md += `- 木: ${sc.mu||0} | 火: ${sc.huo||0} | 土: ${sc.tu||0} | 金: ${sc.jin||0} | 水: ${sc.shui||0}\n`;
+  md += `- 平衡：${wx.balance?.description||''}\n\n`;
+
+  // 格局 + 喜用神
+  md += `## 格局判断\n\n${geju.geju_type||''} - ${geju.description||''}\n\n`;
+  md += `## 喜用神\n\n- 喜用：${(ys.yongshen||[]).join('、')}\n- 忌神：${(ys.jishen||[]).join('、')}\n- ${ys.reason||ys.description||''}\n\n`;
+
+  // 流年
+  md += `## 流年运势（${ln.year||''}年）\n\n`;
+  md += `- 干支：${ln.ganzhi||''}\n- 吉凶：${ln.jixiong?.level||''} - ${ln.jixiong?.description||''}\n- 建议：${(ln.advice||[]).join('；')}\n- ${ln.analysis||''}\n\n`;
+
+  // 大运
+  md += `## 大运分析\n\n`;
+  md += `起运：${dy.qiyun_age||'?'}岁，${dy.direction||''}\n\n`;
+  (dy.dayun_list||[]).forEach(d => {
+    const p = d.pillar?.pillar || d.pillar || {};
+    const a = d.analysis || {};
+    md += `- ${d.age_range||''}: ${p.tiangan||''}${p.dizhi||''} (${a.level||''}) ${a.description||''}\n`;
+  });
+  md += `\n${dy.overall_analysis||''}\n\n`;
+
+  // RAG
+  if (rag.queries && rag.queries.length > 0) {
+    md += `## RAG 知识检索\n\n`;
+    md += `检索状态：${rag.status||''}\n\n`;
+    md += `### 检索查询\n\n`;
+    (rag.queries||[]).forEach(q => { md += `- ${q}\n`; });
+    md += `\n### 检索到的古籍片段\n\n`;
+    (rag.documents||[]).forEach((d,i) => {
+      const score = d.distance != null ? Math.max(0,(1-d.distance)*100).toFixed(0) : '?';
+      md += `**[${i+1}] 相关度 ${score}%**\n\n${d.content||''}\n\n---\n\n`;
+    });
+  }
+
+  // LLM 报告
+  if (lastResult.llm_analysis) {
+    md += `## AI 智能分析报告\n\n${lastResult.llm_analysis}\n`;
+  }
+
+  // 下载
+  const blob = new Blob([md], {type:'text/markdown;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `八字分析报告_${new Date().toISOString().slice(0,10)}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+// ========== 智能对话 ==========
+let chatConversationId = null;
+let chatHistory = [];
+
+async function sendChat() {
+  const input = $('chatInput');
+  const query = input.value.trim();
+  if (!query) return;
+
+  if (!lastResult && !lastTarotResult && !chatConversationId) {
+    appendChatMsg('assistant', currentTab === 'tarot'
+      ? '请先完成塔罗占卜，再进行追问。'
+      : '请先完成八字分析，再进行追问。');
+    return;
+  }
+
+  input.value = '';
+  appendChatMsg('user', query);
+  $('chatSend').disabled = true;
+  $('chatTyping').classList.add('active');
+
+  try {
+    const res = await fetch('/api/v1/chat/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        query: query,
+        user_id: 'web_user',
+        conversation_id: chatConversationId
+      })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null);
+      if (res.status === 429 && errData) {
+        appendChatMsg('assistant', '请求过于频繁，请 ' + (errData.retry_after || 30) + ' 秒后再试');
+      } else if (res.status === 504) {
+        appendChatMsg('assistant', '回复超时，请稍后重试');
+      } else {
+        appendChatMsg('assistant', '请求失败: ' + res.status);
+      }
+      return;
+    }
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message);
+
+    const data = json.data;
+    if (!chatConversationId && data.conversation_id) {
+      chatConversationId = data.conversation_id;
+    }
+    appendChatMsg('assistant', data.response);
+  } catch(e) {
+    appendChatMsg('assistant', '抱歉，出现错误: ' + e.message);
+  } finally {
+    $('chatSend').disabled = false;
+    $('chatTyping').classList.remove('active');
+  }
+}
+
+function appendChatMsg(role, content) {
+  const container = $('chatMessages');
+  // 清除占位文字
+  if (chatHistory.length === 0) container.innerHTML = '';
+  chatHistory.push({role, content});
+
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  bubble.innerHTML = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
+  div.appendChild(bubble);
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+</script>
+</body>
+</html>
