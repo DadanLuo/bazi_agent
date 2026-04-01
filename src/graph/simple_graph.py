@@ -1,6 +1,27 @@
 """
-简化版八字分析图 - 不依赖RAG和LLM
-用于演示和测试
+================================================================================
+简化版八字分析图 - 不依赖 RAG 和 LLM
+================================================================================
+
+功能说明：
+    本模块提供了一个简化版的八字分析工作流，仅执行核心计算节点，
+    不包含 RAG 检索、LLM 生成和安全检查等依赖外部服务的节点。
+
+使用场景：
+    - 演示和测试核心八字计算功能
+    - 在 LLM/RAG 服务不可用时提供降级方案
+    - 快速验证八字排盘结果
+
+调用方式：
+    在 BaziAgent.handle_analysis() 中通过 mode="simple" 参数启用：
+    - result = await simple_app.ainvoke(graph_input)
+
+注意事项：
+    - 不生成 AI 解读报告，仅返回排盘结果
+    - 不进行安全检查，生产环境慎用
+    - 输出格式与完整版不同，需注意兼容性
+
+================================================================================
 """
 import logging
 from typing import Literal
@@ -8,8 +29,7 @@ from langgraph.graph import StateGraph, END
 from src.graph.state import BaziAgentState
 from src.graph.nodes import (
     validate_input_node, calculate_bazi_node, analyze_wuxing_node,
-    determine_geju_node, find_yongshen_node, check_liunian_node,
-    analyze_dayun_node
+    determine_geju_node, find_yongshen_node, check_liunian_node
 )
 
 logger = logging.getLogger(__name__)
@@ -50,11 +70,11 @@ def route_after_yongshen(state: BaziAgentState) -> Literal["check_liunian", "end
     return "check_liunian"
 
 
-def route_after_liunian(state: BaziAgentState) -> Literal["analyze_dayun", "end"]:
+def route_after_liunian(state: BaziAgentState) -> Literal["generate_report", "end"]:
     """流年分析后路由"""
     if state.get("status", "").endswith("_failed"):
         return "end"
-    return "analyze_dayun"
+    return "generate_report"
 
 
 def simple_report_node(state: BaziAgentState):
@@ -72,7 +92,15 @@ def simple_report_node(state: BaziAgentState):
             "dayun": state.get("dayun_analysis", {})
         },
         "time_info": state.get("bazi_result", {}).get("time_info", {}),
-        "message": "八字分析完成（简化版）"
+        "llm_analysis": "",
+        "rag_info": {
+            "status": "skipped",
+            "reason": "快速分析模式未启用 RAG 检索",
+            "queries": [],
+            "documents": [],
+            "doc_count": 0
+        },
+        "message": "八字分析完成（快速模式）"
     }
 
     logger.info("报告组装完成")
@@ -95,7 +123,6 @@ def create_simple_bazi_graph() -> StateGraph:
     workflow.add_node("determine_geju", determine_geju_node)
     workflow.add_node("find_yongshen", find_yongshen_node)
     workflow.add_node("check_liunian", check_liunian_node)
-    workflow.add_node("analyze_dayun", analyze_dayun_node)
     workflow.add_node("generate_report", simple_report_node)
 
     # 设置入口
@@ -135,11 +162,9 @@ def create_simple_bazi_graph() -> StateGraph:
     workflow.add_conditional_edges(
         "check_liunian",
         route_after_liunian,
-        {"analyze_dayun": "analyze_dayun", "end": END}
+        {"generate_report": "generate_report", "end": END}
     )
 
-    # 大运分析后直接生成报告
-    workflow.add_edge("analyze_dayun", "generate_report")
     workflow.add_edge("generate_report", END)
 
     logger.info("简化版 LangGraph 构建完成")

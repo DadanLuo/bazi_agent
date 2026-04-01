@@ -3,57 +3,44 @@
 共享依赖 — 无状态单例 + 请求级 SessionContext 工厂
 
 无状态组件（redis_cache, file_storage, llm, retriever 等）保持模块级单例。
-有状态组件（state_manager）替换为 get_session_context() 工厂，每个请求独立实例。
-旧 state_manager 保留为兼容别名，指向一个默认 SessionContext（仅用于非 API 场景）。
+有状态组件使用 get_session_context() 工厂，每个请求独立实例。
+
+清理说明：
+    - 移除了不存在的模块导入（ContextSkill, ConversationSkill, ModelConfig, HybridRetriever, Reranker）
+    - 移除了过时的 UnifiedStateManager（已被 SessionContext 替代）
+    - 保留 KnowledgeRetriever 作为主检索器入口
 """
 import logging
 from src.storage import FileStorage
 from src.cache.redis_cache import RedisCacheManager
-from src.graph.state_manager import UnifiedStateManager
-from src.skills.context_skill import ContextSkill
-from src.skills.conversation_skill import ConversationSkill
-from src.config.model_config import ModelConfig
-from src.rag.hybrid_retriever import HybridRetriever
 from src.rag.retriever import KnowledgeRetriever
-from src.rag.bm25_retriever import BM25Retriever
-from src.rag.reranker import Reranker
 from src.llm.dashscope_llm import DashScopeLLM
-from src.llm.base import LLMConfig
 from src.core.session_context import SessionContext
 
 logger = logging.getLogger(__name__)
 
 # ========== 无状态单例 ==========
-try:
-    redis_cache = RedisCacheManager()
-    file_storage = FileStorage()
-    context_skill = ContextSkill()
-    conversation_skill = ConversationSkill()
-    model_config = ModelConfig()
+redis_cache = None
+file_storage = None
+retriever = None
+llm = None
 
-    vector_retriever = KnowledgeRetriever()
-    bm25_retriever = BM25Retriever()
-    reranker = Reranker()
-    hybrid_retriever = HybridRetriever(
-        vector_retriever=vector_retriever,
-        bm25_retriever=bm25_retriever,
-        reranker=reranker
-    )
 
-    llm = DashScopeLLM(config=LLMConfig())
-    logger.info("共享依赖初始化成功")
-except Exception as e:
-    logger.warning(f"共享依赖初始化失败: {e}")
-    redis_cache = None
-    file_storage = None
-    context_skill = None
-    conversation_skill = None
-    model_config = None
-    vector_retriever = None
-    bm25_retriever = None
-    reranker = None
-    hybrid_retriever = None
-    llm = None
+def _init_component(name: str, factory):
+    """逐项初始化共享依赖，避免一个组件失败拖垮全部单例。"""
+    try:
+        instance = factory()
+        logger.info(f"{name} 初始化成功")
+        return instance
+    except Exception as e:
+        logger.warning(f"{name} 初始化失败: {e}")
+        return None
+
+
+redis_cache = _init_component("RedisCacheManager", RedisCacheManager)
+file_storage = _init_component("FileStorage", FileStorage)
+retriever = _init_component("KnowledgeRetriever", KnowledgeRetriever)
+llm = _init_component("DashScopeLLM", DashScopeLLM)
 
 
 # ========== 请求级工厂 ==========
@@ -63,7 +50,8 @@ def get_session_context() -> SessionContext:
     return SessionContext(redis_cache=redis_cache, file_storage=file_storage)
 
 
-# ========== 向后兼容 ==========
+# ========== 向后兼容别名 ==========
 # 旧代码中 from src.dependencies import state_manager 仍可用
 # 但新代码应使用 get_session_context()
-state_manager = UnifiedStateManager(redis_cache=redis_cache, file_storage=file_storage) if redis_cache is not None else None
+# 注意：state_manager 现在返回一个默认的 SessionContext 实例
+state_manager = get_session_context() if redis_cache is not None else None

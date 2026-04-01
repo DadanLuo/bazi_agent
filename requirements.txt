@@ -47,6 +47,7 @@ pyyaml>=6.0.0
 
 # 日期和日历
 lunarcalendar>=0.0.9
+lunar-python>=1.4.0
 chinesecalendar>=1.0.0
 
 # 监控和日志
