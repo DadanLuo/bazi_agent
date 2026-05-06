@@ -33,6 +33,7 @@ from typing import Literal
 from langgraph.graph import StateGraph, END
 from src.graph.tarot_state import TarotAgentState
 from src.safety.safety import SafetyChecker, SafetyLevel
+from src.safety.scene_strategy import SceneType
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +277,7 @@ def safety_node(state: TarotAgentState) -> dict:
     
     if _safety_checker and (user_input or user_query):
         input_text = user_query or str(user_input)
-        input_result = _safety_checker.check_input(input_text)
+        input_result = _safety_checker.check_scene_input(input_text, SceneType.TAROT)
         
         if input_result.blocked:
             logger.warning(f"❌ 用户输入被阻断: {input_result.matched_keywords}")
@@ -298,7 +299,7 @@ def safety_node(state: TarotAgentState) -> dict:
     llm_response = state.get("llm_response", "")
     
     if _safety_checker and llm_response:
-        output_result = _safety_checker.check_output(llm_response)
+        output_result = _safety_checker.check_scene_output(llm_response, SceneType.TAROT)
         
         if output_result.blocked:
             logger.warning(f"❌ LLM输出被阻断: {output_result.matched_keywords}")

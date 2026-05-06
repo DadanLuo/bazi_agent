@@ -7,8 +7,11 @@
 - GejuEngine: 格局判断
 - YongshenEngine: 喜用神推导
 - LiunianEngine: 流年分析
+- BaziChartSkill: 独立八字排盘 Skill
 """
+
 from .bazi_calculator import BaziCalculator
+from .bazi_chart_skill import BaziChartSkill
 from .wuxing_calculator import WuxingCalculator
 from .geju import GejuEngine
 from .yongshen import YongshenEngine
@@ -16,9 +19,9 @@ from .liunian import LiunianEngine
 
 __all__ = [
     "BaziCalculator",
+    "BaziChartSkill",
     "WuxingCalculator",
     "GejuEngine",
     "YongshenEngine",
-    "LiunianEngine"
+    "LiunianEngine",
 ]
-

@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional
+
+from config.settings import settings
 
 
 def _slug_token(value: str, max_len: int) -> str:
@@ -127,20 +128,16 @@ class RagVersionSettings:
 
 
 def load_rag_config() -> RagVersionSettings:
-    """从环境变量和默认值加载当前 RAG 配置。"""
-    project_root = Path(__file__).resolve().parents[2]
+    """从统一 config 加载当前 RAG 配置。"""
     return RagVersionSettings(
-        chroma_persist_dir=os.getenv(
-            "CHROMA_PERSIST_DIR",
-            str(project_root / "chroma_db"),
-        ),
-        collection_prefix=os.getenv("RAG_COLLECTION_PREFIX", "bazi_knowledge"),
-        index_version=os.getenv("RAG_INDEX_VERSION", "v2"),
-        embedding_provider=os.getenv("RAG_EMBEDDING_PROVIDER", "dashscope"),
-        embedding_model=os.getenv("RAG_EMBEDDING_MODEL", "text-embedding-v4"),
-        splitter_name=os.getenv("RAG_SPLITTER_NAME", "recursive"),
-        splitter_version=os.getenv("RAG_SPLITTER_VERSION", "v1"),
-        explicit_collection_name=os.getenv("RAG_COLLECTION_NAME") or None,
+        chroma_persist_dir=settings.resolved_chroma_persist_dir,
+        collection_prefix=settings.resolved_rag_collection_prefix,
+        index_version=settings.resolved_rag_index_version,
+        embedding_provider=settings.resolved_embedding_provider,
+        embedding_model=settings.resolved_embedding_model,
+        splitter_name=settings.resolved_rag_splitter_name,
+        splitter_version=settings.resolved_rag_splitter_version,
+        explicit_collection_name=settings.resolved_rag_collection_name,
     )
 
 

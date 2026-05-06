@@ -17,8 +17,9 @@
 ==============================================================================
 """
 
+import re
 from dataclasses import dataclass
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Pattern, Set, Optional, Literal
 from enum import Enum
 
 
@@ -118,6 +119,24 @@ class SceneSafetyStrategy:
         ==============================================================================
         """
         self.configs: Dict[SceneType, SceneSafetyConfig] = {}
+        self.ambiguous_keyword_patterns: Dict[str, List[Pattern[str]]] = {
+            "黄色": [
+                re.compile(r"黄(片|片子|网|色网站|色小说|色资源)", re.IGNORECASE),
+                re.compile(r"黄色(?:网站|小说|视频|资源|图片|漫画|内容|电影|片)", re.IGNORECASE),
+            ],
+            "敏感": [
+                re.compile(r"敏感词", re.IGNORECASE),
+                re.compile(r"政治敏感", re.IGNORECASE),
+            ],
+        }
+        self.mitigating_patterns = [
+            re.compile(pattern, re.IGNORECASE)
+            for pattern in [
+                r"(不要|别|不能|不可|不该|避免|远离|警惕|拒绝|防止|谨慎|切勿|别把).{0,8}",
+                r"(违法|非法|高风险|有风险|存在风险|不建议|不宜|无关).{0,8}",
+                r"(不是|并非|不代表|不等于|不意味着).{0,8}",
+            ]
+        ]
         self._init_configs()
     
     def _init_configs(self):
@@ -153,12 +172,14 @@ class SceneSafetyStrategy:
                 "赌博", "赌钱", "赌球", "赌马", "六合彩", "梭哈",
                 "违法", "犯罪", "贩毒", "走私", "贪污", "受贿",
                 "诈骗", "敲诈", "绑架", "拐卖", "恐怖分子", "暴恐",
+                "色情", "黄色", "成人影片", "约炮", "嫖娼", "上床",
+                "股票", "炒股", "荐股", "涨停", "跌停", "股票代码", "带单", "喊单",
             },
             warning_keywords={
                 # 需要警告的内容
                 "注定", "宿命", "无法改变", "命中注定", "逃不掉",
                 "命里注定", "注定要", "注定会", "注定不能", "注定失败",
-                "注定成功", "宿命", "轮回", "阴间", "阳间",
+                "注定成功", "宿命", "轮回", "阴间", "阳间", "投资", "理财", "基金",
             },
             strictness=0.5,  # 中等严格度
             require_human_review=False,
@@ -190,11 +211,13 @@ class SceneSafetyStrategy:
                 "赌博", "赌钱", "赌球", "赌马", "六合彩", "梭哈",
                 "违法", "犯罪", "贩毒", "走私", "贪污", "受贿",
                 "诅咒", "附体", "驱鬼", "画符", "咒语", "阴灵",
+                "色情", "黄色", "成人影片", "约炮", "嫖娼", "上床",
+                "股票", "炒股", "荐股", "涨停", "跌停", "股票代码", "带单", "喊单",
             },
             warning_keywords={
                 # 需要警告的内容
                 "鬼魂", "阴间", "投胎", "轮回", "阳间", "阴间",
-                "灵魂", "灵异", "超自然", "神秘力量", "神秘能量",
+                "灵魂", "灵异", "超自然", "神秘力量", "神秘能量", "投资", "理财", "基金",
             },
             strictness=0.6,  # 稍高严格度
             require_human_review=False,
@@ -219,6 +242,8 @@ class SceneSafetyStrategy:
                 "诈骗", "敲诈", "绑架", "拐卖", "恐怖分子", "暴恐",
                 "分裂国家", "反政府", "反共", "政变", "抗议",
                 "鬼魂", "阴间", "阳间", "投胎", "轮回", "诅咒",
+                "色情", "黄色", "成人影片", "约炮", "嫖娼", "上床",
+                "股票", "炒股", "荐股", "涨停", "跌停", "股票代码", "带单", "喊单",
             },
             warning_keywords=set(),
             strictness=0.9,  # 高严格度
@@ -241,10 +266,12 @@ class SceneSafetyStrategy:
                 "杀人", "谋杀", "伤害", "殴打", "砍死", "炸死",
                 "赌博", "赌钱", "赌球", "赌马", "六合彩", "梭哈",
                 "违法", "犯罪", "贩毒", "走私", "贪污", "受贿",
+                "色情", "黄色", "成人影片", "约炮", "嫖娼", "上床",
+                "股票", "炒股", "荐股", "涨停", "跌停", "股票代码", "带单", "喊单",
             },
             warning_keywords={
                 # 需要警告的内容
-                "注定", "宿命", "无法改变", "命中注定", "逃不掉",
+                "注定", "宿命", "无法改变", "命中注定", "逃不掉", "投资", "理财", "基金",
             },
             strictness=0.7,  # 中高严格度
             require_human_review=False,
@@ -271,6 +298,7 @@ class SceneSafetyStrategy:
         self,
         content: str,
         scene_type: SceneType,
+        mode: Literal["input", "output"] = "input",
     ) -> Dict:
         """
         ==============================================================================
@@ -314,13 +342,18 @@ class SceneSafetyStrategy:
         
         # 检查禁止关键词
         for keyword in config.blocked_keywords:
-            if keyword in content:
+            if self._keyword_matches(content, keyword) and not self._has_mitigating_context(content, keyword):
                 result["blocked"] = True
                 result["matched_keywords"].append(keyword)
         
         # 检查警告关键词
         for keyword in config.warning_keywords:
-            if keyword in content:
+            if self._keyword_matches(content, keyword):
+                if mode == "output" and keyword in {"投资", "理财", "基金"}:
+                    if any(pattern.search(content) for pattern in self.mitigating_patterns):
+                        continue
+                if mode == "output" and self._has_mitigating_context(content, keyword):
+                    continue
                 result["warning"] = True
                 result["matched_keywords"].append(keyword)
         
@@ -338,6 +371,23 @@ class SceneSafetyStrategy:
             result["message"] = "请注意：内容可能存在风险"
         
         return result
+
+    def _keyword_matches(self, content: str, keyword: str) -> bool:
+        patterns = self.ambiguous_keyword_patterns.get(keyword)
+        if patterns:
+            return any(pattern.search(content) for pattern in patterns)
+        return keyword in content
+
+    def _has_mitigating_context(self, content: str, keyword: str) -> bool:
+        try:
+            keyword_index = content.index(keyword)
+        except ValueError:
+            return False
+
+        start = max(0, keyword_index - 12)
+        end = min(len(content), keyword_index + len(keyword) + 12)
+        context = content[start:end]
+        return any(pattern.search(context) for pattern in self.mitigating_patterns)
     
     def get_strictness(self, scene_type: SceneType) -> float:
         """

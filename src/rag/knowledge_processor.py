@@ -1,5 +1,4 @@
 # src/rag/knowledge_processor.py
-import os
 import hashlib
 import json
 import re
@@ -14,6 +13,7 @@ from dashscope import TextEmbedding
 import chromadb
 
 # 导入自定义模块
+from config.settings import settings
 from src.config.rag_config import rag_config
 from src.rag.term_normalizer import normalize
 from src.rag.splitter.metadata_handler import process_document_with_metadata
@@ -36,11 +36,6 @@ PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 DOCX_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 Path(rag_config.chroma_persist_dir).mkdir(parents=True, exist_ok=True)
 
-# API Key 配置
-DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY")
-if not DASHSCOPE_API_KEY:
-    raise EnvironmentError("未设置环境变量 DASHSCOPE_API_KEY")
-dashscope.api_key = DASHSCOPE_API_KEY
 CHROMA_PERSIST_DIR = rag_config.chroma_persist_dir
 MD5_RECORD_FILE = rag_config.md5_record_file
 
@@ -247,11 +242,21 @@ def smart_chunk_text(text: str, max_length: int = 512, overlap: int = 50) -> Lis
 
 # ============== Embedding 相关 ==============
 
+def _configure_embedding_client() -> str:
+    """根据统一 config 配置 Embedding 客户端。"""
+    api_key = settings.resolved_embedding_api_key
+    if not api_key:
+        raise EnvironmentError("未设置 Embedding API Key，请在 config 中配置")
+    dashscope.api_key = api_key
+    return api_key
+
+
 def get_qwen_embeddings(texts: List[str], batch_size: int = 10) -> List[List[float]]:
     """调用 Embedding API（自动分批）"""
     if not texts:
         return []
 
+    _configure_embedding_client()
     all_embeddings = []
     total_batches = (len(texts) + batch_size - 1) // batch_size
 

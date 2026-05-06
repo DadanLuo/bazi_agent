@@ -31,8 +31,16 @@ from src.core.engine.bazi_calculator import BaziCalculator
 from src.core.engine.wuxing_calculator import WuxingCalculator
 from .state import BaziAgentState
 from src.rag.retriever import KnowledgeRetriever
+from src.rag.relevance import (
+    build_bazi_query_plans,
+    is_high_signal_doc,
+    relax_where_condition,
+    score_rag_doc,
+    select_rag_documents,
+)
 from src.llm.dashscope_llm import DashScopeLLM
 from src.safety.safety import SafetyChecker, SafetyInput, SafetyLevel
+from src.safety.scene_strategy import SceneType
 
 logger = logging.getLogger(__name__)
 
@@ -581,124 +589,11 @@ def retrieve_knowledge_node(state: BaziAgentState) -> Dict[str, Any]:
         geju_analysis = state.get("geju_analysis", {})
         yongshen_analysis = state.get("yongshen_analysis", {})
         excluded_sources = {"treelist"}
-
-        def _enum_value(value: Any) -> Any:
-            return getattr(value, "value", value)
-
-        def _normalize_source_name(source: Any) -> str:
-            return str(source or "").strip().lower()
-
-        def _is_valid_doc(doc: Dict[str, Any]) -> bool:
-            source = _normalize_source_name(doc.get("metadata", {}).get("source"))
-            if not source:
-                return True
-            return source not in excluded_sources
-
-        def _relax_where(where_condition: Dict[str, Any], *, drop_topic: bool, drop_sub_topic: bool, drop_keywords: bool) -> Dict[str, Any]:
-            if not where_condition:
-                return {}
-
-            if "$and" not in where_condition:
-                if drop_topic and "topic" in where_condition:
-                    return {}
-                if drop_sub_topic and "sub_topic" in where_condition:
-                    return {}
-                return where_condition
-
-            relaxed_predicates = []
-            for predicate in where_condition.get("$and", []):
-                if not isinstance(predicate, dict):
-                    continue
-                if drop_topic and "topic" in predicate:
-                    continue
-                if drop_sub_topic and "sub_topic" in predicate:
-                    continue
-                if drop_keywords and "$or" in predicate:
-                    keyword_or = predicate.get("$or", [])
-                    if keyword_or and all(isinstance(item, dict) and "keywords" in item for item in keyword_or):
-                        continue
-                relaxed_predicates.append(predicate)
-
-            if not relaxed_predicates:
-                return {}
-            if len(relaxed_predicates) == 1:
-                return relaxed_predicates[0]
-            return {"$and": relaxed_predicates}
-
-        def _search_with_fallback(query: str, where_condition: Dict[str, Any]) -> List[Dict[str, Any]]:
-            attempts = [
-                (where_condition if where_condition else None, 4),
-                (_relax_where(where_condition, drop_topic=False, drop_sub_topic=True, drop_keywords=True) if where_condition else None, 5),
-                (_relax_where(where_condition, drop_topic=True, drop_sub_topic=True, drop_keywords=True) if where_condition else None, 6),
-                (None, 6),
-            ]
-
-            merged_results = []
-            seen_contents = set()
-            seen_attempts = set()
-
-            for current_where, top_k in attempts:
-                attempt_key = json.dumps(current_where, ensure_ascii=False, sort_keys=True) if current_where else "__no_where__"
-                if attempt_key in seen_attempts:
-                    continue
-                seen_attempts.add(attempt_key)
-
-                candidate_docs = retriever.search(query, top_k=top_k, where=current_where)
-                candidate_docs = [doc for doc in candidate_docs if _is_valid_doc(doc)]
-
-                if not candidate_docs:
-                    continue
-
-                for doc in candidate_docs:
-                    content = doc.get("content", "")
-                    if not content or content in seen_contents:
-                        continue
-                    merged_results.append(doc)
-                    seen_contents.add(content)
-
-                if len(merged_results) >= 4:
-                    break
-
-            merged_results.sort(key=lambda item: item.get("distance", 1.0))
-            return merged_results[:6]
-
-        # 构建多路查询计划
-        query_plans = []
-
-        # 1. 基于日主和月令查询
-        day_master = _enum_value(
-            bazi_result.get("four_pillars", {}).get("day", {}).get("tiangan", "")
+        query_plans = build_bazi_query_plans(
+            bazi_result=bazi_result,
+            geju_analysis=geju_analysis,
+            yongshen_analysis=yongshen_analysis,
         )
-        month_zhi = _enum_value(
-            bazi_result.get("four_pillars", {}).get("month", {}).get("dizhi", "")
-        )
-        if day_master and month_zhi:
-            query_plans.append({
-                "route": "命局",
-                "query": f"{day_master}日主生于{month_zhi}月",
-                "tokens": [day_master, month_zhi],
-                "weight": 1.0,
-            })
-
-        # 2. 基于格局查询
-        geju_type = geju_analysis.get("geju_type", "")
-        if geju_type and geju_type != "常格":
-            query_plans.append({
-                "route": "格局",
-                "query": f"{geju_type}的特点与喜忌",
-                "tokens": [geju_type],
-                "weight": 1.15,
-            })
-
-        # 3. 基于喜用神查询
-        yongshen = yongshen_analysis.get("yongshen", [])
-        if yongshen:
-            query_plans.append({
-                "route": "用神",
-                "query": f"{' '.join(yongshen)}五行的含义与应用",
-                "tokens": list(yongshen),
-                "weight": 0.95,
-            })
 
         if not query_plans:
             logger.info("未生成有效检索查询，跳过 RAG")
@@ -718,49 +613,75 @@ def retrieve_knowledge_node(state: BaziAgentState) -> Dict[str, Any]:
         # 执行检索
         all_docs = []
         for plan in query_plans:
-            query = plan["query"]
+            query = plan.query
             where_condition = retriever.build_where_from_query(query)
             logger.info(f"检索查询: {query}")
             logger.info(f"检索过滤条件: {where_condition}")
-            results = _search_with_fallback(query, where_condition)
-            for doc in results:
-                enriched_doc = dict(doc)
-                enriched_doc["_route"] = plan["route"]
-                enriched_doc["_route_weight"] = plan["weight"]
-                enriched_doc["_tokens"] = plan["tokens"]
-                all_docs.append(enriched_doc)
+            attempts = [
+                (where_condition if where_condition else None, 4),
+                (
+                    relax_where_condition(
+                        where_condition,
+                        drop_topic=False,
+                        drop_sub_topic=True,
+                        drop_keywords=True,
+                    )
+                    if where_condition
+                    else None,
+                    5,
+                ),
+                (
+                    relax_where_condition(
+                        where_condition,
+                        drop_topic=False,
+                        drop_sub_topic=True,
+                        drop_keywords=False,
+                    )
+                    if where_condition
+                    else None,
+                    6,
+                ),
+            ]
 
-        def _rerank_score(doc: Dict[str, Any]) -> float:
-            distance = float(doc.get("distance", 1.0) or 1.0)
-            similarity_score = max(0.0, 1.2 - distance)
-            route_weight = float(doc.get("_route_weight", 1.0))
-            tokens = [str(token) for token in doc.get("_tokens", []) if token]
-            metadata = doc.get("metadata", {}) or {}
-            metadata_values = []
-            for value in metadata.values():
-                if isinstance(value, list):
-                    metadata_values.extend([str(item) for item in value])
-                elif value is not None:
-                    metadata_values.append(str(value))
-            haystack = " ".join(metadata_values) + " " + str(doc.get("content", ""))[:300]
-            token_hits = sum(1 for token in tokens if token and token in haystack)
-            return similarity_score + route_weight * 0.25 + min(token_hits, 3) * 0.12
+            route_docs = []
+            seen_contents = set()
+            seen_attempts = set()
 
-        # 简单去重（根据内容）并保留更优结果
-        unique_docs_map = {}
-        for doc in all_docs:
-            content = doc.get("content", "")
-            if not content:
-                continue
-            score = _rerank_score(doc)
-            existing = unique_docs_map.get(content)
-            if existing is None or score > existing["_score"]:
-                doc["_score"] = score
-                unique_docs_map[content] = doc
+            for current_where, top_k in attempts:
+                attempt_key = (
+                    json.dumps(current_where, ensure_ascii=False, sort_keys=True)
+                    if current_where
+                    else "__no_where__"
+                )
+                if attempt_key in seen_attempts:
+                    continue
+                seen_attempts.add(attempt_key)
 
-        unique_docs = list(unique_docs_map.values())
-        unique_docs.sort(key=lambda item: item.get("_score", 0.0), reverse=True)
-        unique_docs = unique_docs[:6]
+                candidate_docs = retriever.search(query, top_k=top_k, where=current_where)
+                high_signal_docs = [
+                    doc
+                    for doc in candidate_docs
+                    if is_high_signal_doc(doc, plan, excluded_sources=excluded_sources)
+                ]
+
+                for doc in high_signal_docs:
+                    content = doc.get("content", "")
+                    if not content or content in seen_contents:
+                        continue
+                    enriched_doc = dict(doc)
+                    enriched_doc["_route"] = plan.route
+                    enriched_doc["_route_weight"] = plan.weight
+                    enriched_doc["_tokens"] = plan.tokens
+                    enriched_doc["_score"] = score_rag_doc(enriched_doc, plan)
+                    route_docs.append(enriched_doc)
+                    seen_contents.add(content)
+
+                if len(route_docs) >= 3:
+                    break
+
+            logger.info("RAG 路由 %s 命中高信号片段 %s 条", plan.route, len(route_docs))
+            all_docs.extend(route_docs)
+        unique_docs = select_rag_documents(all_docs, max_docs=4, min_score=1.0, fallback_score=0.72)
 
         cleaned_docs = []
         for doc in unique_docs:
@@ -781,7 +702,7 @@ def retrieve_knowledge_node(state: BaziAgentState) -> Dict[str, Any]:
             "rag_info": {
                 "status": "success" if cleaned_docs else "skipped",
                 "reason": "" if cleaned_docs else "未命中相关知识片段",
-                "queries": [f"[{plan['route']}] {plan['query']}" for plan in query_plans],
+                "queries": [f"[{plan.route}] {plan.query}" for plan in query_plans],
                 "documents": cleaned_docs,
                 "doc_count": len(cleaned_docs)
             },
@@ -795,7 +716,7 @@ def retrieve_knowledge_node(state: BaziAgentState) -> Dict[str, Any]:
             "rag_info": {
                 "status": "failed",
                 "reason": str(e),
-                "queries": [f"[{plan['route']}] {plan['query']}" for plan in query_plans] if 'query_plans' in locals() else [],
+                "queries": [f"[{plan.route}] {plan.query}" for plan in query_plans] if 'query_plans' in locals() else [],
                 "documents": [],
                 "doc_count": 0
             },
@@ -998,7 +919,7 @@ def safety_check_node(state: BaziAgentState) -> Dict[str, Any]:
     if safety_checker and (user_input or user_query):
         # 检查用户输入
         input_text = user_query or str(user_input)
-        input_result = safety_checker.check_input(input_text)
+        input_result = safety_checker.check_scene_input(input_text, SceneType.BAZI)
         
         if input_result.blocked:
             logger.warning(f"❌ 用户输入被阻断: {input_result.matched_keywords}")
@@ -1022,7 +943,7 @@ def safety_check_node(state: BaziAgentState) -> Dict[str, Any]:
     
     if safety_checker and (final_output or llm_response):
         output_text = llm_response or str(final_output)
-        output_result = safety_checker.check_output(output_text)
+        output_result = safety_checker.check_scene_output(output_text, SceneType.BAZI)
         
         if output_result.blocked:
             logger.warning(f"❌ LLM输出被阻断: {output_result.matched_keywords}")

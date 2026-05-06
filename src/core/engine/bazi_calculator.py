@@ -21,13 +21,22 @@ import math
 from datetime import datetime
 from typing import List, Dict, Any
 from src.core.models.bazi_models import (
-    BirthInfo, FourPillars, Pillar, Tiangan, Dizhi,
-    WuxingScore, DayunPillar, BaziResult
+    BirthInfo,
+    FourPillars,
+    Pillar,
+    Tiangan,
+    Dizhi,
+    WuxingScore,
+    DayunPillar,
+    BaziResult,
 )
+from src.core.models.bazi_chart_models import BaziChartResponse
+from .bazi_chart_skill import BaziChartSkill
 from .wuxing_calculator import WuxingCalculator
 
 try:
     from lunar_python import Solar as LunarSolar
+
     LUNAR_PYTHON_AVAILABLE = True
 except ImportError:
     LunarSolar = None
@@ -36,12 +45,34 @@ except ImportError:
 # --- 常量定义 ---
 
 # 十天干列表
-TIANGAN_LIST = [Tiangan.JIA, Tiangan.YI, Tiangan.BING, Tiangan.DING, Tiangan.WU,
-                Tiangan.JI, Tiangan.GENG, Tiangan.XIN, Tiangan.REN, Tiangan.GUI]
+TIANGAN_LIST = [
+    Tiangan.JIA,
+    Tiangan.YI,
+    Tiangan.BING,
+    Tiangan.DING,
+    Tiangan.WU,
+    Tiangan.JI,
+    Tiangan.GENG,
+    Tiangan.XIN,
+    Tiangan.REN,
+    Tiangan.GUI,
+]
 
 # 十二地支列表
-DIZHI_LIST = [Dizhi.ZI, Dizhi.CHOU, Dizhi.YIN, Dizhi.MAO, Dizhi.CHEN, Dizhi.SI,
-              Dizhi.WU, Dizhi.WEI, Dizhi.SHEN, Dizhi.YOU, Dizhi.XU, Dizhi.HAI]
+DIZHI_LIST = [
+    Dizhi.ZI,
+    Dizhi.CHOU,
+    Dizhi.YIN,
+    Dizhi.MAO,
+    Dizhi.CHEN,
+    Dizhi.SI,
+    Dizhi.WU,
+    Dizhi.WEI,
+    Dizhi.SHEN,
+    Dizhi.YOU,
+    Dizhi.XU,
+    Dizhi.HAI,
+]
 
 # 年干支基准：1984 年为甲子年（天干第0位，地支第0位）
 BASE_YEAR = 1984
@@ -54,11 +85,11 @@ class BaziCalculator:
     ==============================================================================
     八字计算主类
     ==============================================================================
-    
+
     功能说明：
         八字计算主类，负责八字排盘的核心计算逻辑。包括年柱、月柱、日柱、
         时柱的干支推算，以及大运计算。
-    
+
     核心方法：
         - calculate_year_pillar() - 计算年柱
         - calculate_month_pillar() - 计算月柱
@@ -67,12 +98,12 @@ class BaziCalculator:
         - calculate_wuxing_score() - 计算五行分数
         - calculate_dayun() - 计算大运
         - calculate() - 完整排盘流程
-    
+
     使用场景：
         - 八字排盘分析
         - 大运推算
         - 五行分析
-    
+
     ==============================================================================
     """
 
@@ -81,6 +112,7 @@ class BaziCalculator:
         初始化八字计算器，创建五行计算器实例。
         """
         self.wuxing_calculator = WuxingCalculator()
+        self.chart_skill = BaziChartSkill()
 
     @staticmethod
     def _pillar_from_ganzhi(ganzhi: str) -> Pillar:
@@ -119,69 +151,66 @@ class BaziCalculator:
         ==============================================================================
         计算年柱
         ==============================================================================
-        
+
         功能说明：
             根据公历年份计算对应的干支纪年（年柱）。
             以1984年甲子年为基准进行推算。
-        
+
         参数说明：
             year (int): 公历年份
-        
+
         返回值：
             Pillar: 年柱对象，包含天干和地支
-        
+
         计算原理：
             干支纪年以60年为一个循环（甲子周期）。
             天干索引 = (year - BASE_YEAR) % 10
             地支索引 = (year - BASE_YEAR) % 12
-        
+
         示例：
             calculate_year_pillar(1990) -> 甲子
             calculate_year_pillar(2023) -> 癸卯
-        
+
         ==============================================================================
         """
         tg_idx = (year - BASE_YEAR) % 10
         dz_idx = (year - BASE_YEAR) % 12
-        return Pillar(
-            tiangan=TIANGAN_LIST[tg_idx],
-            dizhi=DIZHI_LIST[dz_idx]
-        )
+        return Pillar(tiangan=TIANGAN_LIST[tg_idx], dizhi=DIZHI_LIST[dz_idx])
 
     def calculate_month_pillar(self, year: int, month: int, day: int) -> Pillar:
         """
         ==============================================================================
         计算月柱
         ==============================================================================
-        
+
         功能说明：
             根据年份、月份和日期计算对应的干支纪月（月柱）。
             使用五虎遁年起月法进行推算。
-        
+
         参数说明：
             year (int): 公历年份
             month (int): 公历月份（1-12）
             day (int): 公历日期
-        
+
         返回值：
             Pillar: 月柱对象，包含天干和地支
-        
+
         计算原理：
             1. 先计算年柱的天干索引
             2. 根据年干确定正月的天干起始位置（五虎遁口诀）
             3. 根据月份计算月柱的天干和地支
-        
+
         五虎遁口诀：
             甲己之年丙作首，乙庚之年戊为头，
             丙辛之年庚寅起，丁壬壬寅顺行流，
             戊癸之年壬寅起，正月从丙寅开始。
-        
+
         地支规律：
             正月为寅，二月为卯，三月为辰，以此类推
-        
+
         示例：
             calculate_month_pillar(1990, 3, 15) -> 戊寅
-        
+
         ==============================================================================
         """
         year_pillar = self.calculate_year_pillar(year)
@@ -203,27 +232,27 @@ class BaziCalculator:
         ==============================================================================
         计算日柱
         ==============================================================================
-        
+
         功能说明：
             根据公历日期计算对应的干支纪日（日柱）。
             使用基准日推算法，以1900年1月1日为基准。
-        
+
         参数说明：
             year (int): 公历年份
             month (int): 公历月份（1-12）
             day (int): 公历日期
-        
+
         返回值：
             Pillar: 日柱对象，包含天干和地支
-        
+
         计算原理：
             1. 计算目标日期与基准日期（1900年1月1日）的天数差
             2. 基准日为甲辰日（天干第0位，地支第10位）
             3. 根据天数差推算目标日期的干支
-        
+
         示例：
             calculate_day_pillar(1990, 3, 15) -> 丙寅
-        
+
         ==============================================================================
         """
         base_date = datetime(1900, 1, 1)
@@ -244,36 +273,36 @@ class BaziCalculator:
         ==============================================================================
         计算时柱
         ==============================================================================
-        
+
         功能说明：
             根据日干和时辰计算对应的干支纪时（时柱）。
             使用五鼠遁日起时法进行推算。
-        
+
         参数说明：
             day (int): 公历日期（用于计算日干）
             hour (int): 时辰（0-23点）
             day_pillar (Pillar): 日柱对象
-        
+
         返回值：
             Pillar: 时柱对象，包含天干和地支
-        
+
         计算原理：
             1. 获取日干的天干索引
             2. 根据日干确定子时的天干起始位置（五鼠遁口诀）
             3. 根据时辰确定地支（2小时为一个时辰）
             4. 计算时柱的天干
-        
+
         五鼠遁口诀：
             甲己还加甲，乙庚丙作初，
             丙辛从戊子，丁壬庚子居，
             戊癸何发端，壬子是真途。
-        
+
         时辰地支：
             23-1点：子时，1-3点：丑时，以此类推
-        
+
         示例：
             calculate_hour_pillar(15, 14, day_pillar) -> 丁未
-        
+
         ==============================================================================
         """
         day_tg_idx = TIANGAN_LIST.index(day_pillar.tiangan)
@@ -294,16 +323,16 @@ class BaziCalculator:
         ==============================================================================
         统计五行分数（使用新的规则计算器）
         ==============================================================================
-        
+
         功能说明：
             计算八字中五行的分布分数，用于后续的五行分析和日主强弱判断。
-        
+
         参数说明：
             pillars (FourPillars): 四柱对象
-        
+
         返回值：
             WuxingScore: 五行分数对象
-        
+
         ==============================================================================
         """
         return self.wuxing_calculator.calculate_total_score(pillars)
@@ -313,32 +342,32 @@ class BaziCalculator:
         ==============================================================================
         计算大运
         ==============================================================================
-        
+
         功能说明：
             根据性别和日干阴阳，计算大运排列。
             阳男阴女顺排，阴男阳女逆排。
-        
+
         参数说明：
             birth_info (BirthInfo): 出生信息对象
             pillars (FourPillars): 四柱对象
-        
+
         返回值：
             List[DayunPillar]: 大运列表，每10年为一大运
-        
+
         计算原理：
             1. 确定排运方向（顺排或逆排）
             2. 从月柱开始，按天干地支顺序推算
             3. 每10年为一大运，共8步大运
-        
+
         性别与排运规则：
             - 阳男（甲、丙、戊、庚、壬）：顺排
             - 阴女（乙、丁、己、辛、癸）：顺排
             - 阴男（乙、丁、己、辛、癸）：逆排
             - 阳女（甲、丙、戊、庚、壬）：逆排
-        
+
         示例：
             甲子年 丙寅月 丙寅日 男 -> 顺排：丁卯、戊辰、己巳...
-        
+
         ==============================================================================
         """
         dayun_list = []
@@ -351,7 +380,7 @@ class BaziCalculator:
 
             dp = DayunPillar(
                 start_age=start_age + i * 10,
-                pillar=Pillar(tiangan=TIANGAN_LIST[tg_idx], dizhi=DIZHI_LIST[dz_idx])
+                pillar=Pillar(tiangan=TIANGAN_LIST[tg_idx], dizhi=DIZHI_LIST[dz_idx]),
             )
             dayun_list.append(dp)
 
@@ -362,17 +391,17 @@ class BaziCalculator:
         ==============================================================================
         完整排盘流程
         ==============================================================================
-        
+
         功能说明：
             执行完整的八字排盘流程，包括年柱、月柱、日柱、时柱、五行分数
             和大运的计算。
-        
+
         参数说明：
             birth_info (BirthInfo): 出生信息对象
-        
+
         返回值：
             BaziResult: 八字排盘结果对象
-        
+
         排盘流程：
             1. 计算年柱
             2. 计算月柱
@@ -381,34 +410,46 @@ class BaziCalculator:
             5. 组合四柱
             6. 计算五行分数
             7. 计算大运
-        
+
         ==============================================================================
         """
         if LUNAR_PYTHON_AVAILABLE:
-            four_pillars = self._calculate_with_lunar_python(birth_info)
-        else:
-            # 兼容兜底：如果更严谨的历法库不可用，则回退到旧算法
-            year_pillar = self.calculate_year_pillar(birth_info.year)
-            month_pillar = self.calculate_month_pillar(birth_info.year, birth_info.month, birth_info.day)
-            day_pillar = self.calculate_day_pillar(birth_info.year, birth_info.month, birth_info.day)
-            hour_pillar = self.calculate_hour_pillar(birth_info.day, birth_info.hour, day_pillar)
-
+            chart, dayun = self.chart_skill.to_legacy_result(birth_info)
             four_pillars = FourPillars(
-                year=year_pillar,
-                month=month_pillar,
-                day=day_pillar,
-                hour=hour_pillar
+                year=self._pillar_from_ganzhi(chart.four_pillars.year.ganzhi),
+                month=self._pillar_from_ganzhi(chart.four_pillars.month.ganzhi),
+                day=self._pillar_from_ganzhi(chart.four_pillars.day.ganzhi),
+                hour=self._pillar_from_ganzhi(chart.four_pillars.hour.ganzhi),
+            )
+            wuxing_score = self.calculate_wuxing_score(four_pillars)
+            return BaziResult(
+                birth_info=birth_info,
+                four_pillars=four_pillars,
+                wuxing_score=wuxing_score,
+                dayun=dayun,
             )
 
-        # 计算五行分数
+        # 兼容兜底：如果更严谨的历法库不可用，则回退到旧算法
+        year_pillar = self.calculate_year_pillar(birth_info.year)
+        month_pillar = self.calculate_month_pillar(
+            birth_info.year, birth_info.month, birth_info.day
+        )
+        day_pillar = self.calculate_day_pillar(birth_info.year, birth_info.month, birth_info.day)
+        hour_pillar = self.calculate_hour_pillar(birth_info.day, birth_info.hour, day_pillar)
+
+        four_pillars = FourPillars(
+            year=year_pillar, month=month_pillar, day=day_pillar, hour=hour_pillar
+        )
+
         wuxing_score = self.calculate_wuxing_score(four_pillars)
-        
-        # 计算大运
         dayun = self.calculate_dayun(birth_info, four_pillars)
 
         return BaziResult(
-            birth_info=birth_info,
-            four_pillars=four_pillars,
-            wuxing_score=wuxing_score,
-            dayun=dayun
+            birth_info=birth_info, four_pillars=four_pillars, wuxing_score=wuxing_score, dayun=dayun
         )
+
+    def calculate_chart(
+        self, birth_info: BirthInfo, analysis_depth: str = "详细"
+    ) -> BaziChartResponse:
+        """返回新版独立 Skill 结构化结果。"""
+        return self.chart_skill.chart_from_birth_info(birth_info, analysis_depth=analysis_depth)

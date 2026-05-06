@@ -1,93 +1,138 @@
-# 八字助手 (Bazi Agent)
+# 赛博司命 Bazi Agent
 
-一个基于 Python 的八字命理分析工具，提供八字计算、运势分析、风水建议等功能。
+赛博司命是一个面向八字命理与塔罗问答的 FastAPI 智能体项目。它把传统排盘规则、RAG 知识检索、DashScope/Qwen 大模型调用、LangGraph 工作流和网页交互界面整合为一个可本地运行、可扩展的垂直领域应用。
 
-## 功能特性
+## 核心能力
 
-- 八字排盘
-- 大运流年分析
-- 五行分析
-- 纳音分析
-- 神煞查询
-- 调候用神分析
-- 塔罗占卜
-- 多模态分析
-
-## 安装
-
-```bash
-pip install -r requirements.txt
-```
-
-## 使用
-
-```bash
-python src/main.py
-```
+- 八字分析：支持出生时间、性别、地点、真太阳时、节气边界和四柱结构分析。
+- BaziChartSkill：提供结构化排盘、五行统计、十神关系、藏干、纳音、大运与流年等可复用能力。
+- RAG 检索：对命理知识库进行向量检索、关键词补充、版本隔离和相关性筛选。
+- 大模型适配：通过 OpenAI 兼容接口接入 DashScope/Qwen，支持上下文预算和安全降级。
+- 塔罗工作流：提供塔罗抽牌、牌义解释、上下文续问和流式输出。
+- 流式 API：通过 SSE 返回分析进度与最终结果，便于前端展示长任务状态。
+- 安全与中间件：包含输入校验、安全审核、超时、日志、限流和健康检查。
+- 前端页面：`static/index.html` 提供可直接访问的八字与塔罗交互界面。
 
 ## 项目结构
 
-```
+```text
 bazi-agent/
 ├── src/
-│   ├── agents/          # 代理模块
-│   │   ├── bazi_agent.py    # 八字分析代理
-│   │   └── tarot_agent.py   # 塔罗分析代理
-│   ├── api/             # API 接口
-│   │   ├── bazi_api.py      # 八字 API
-│   │   ├── chat_api.py      # 聊天 API
-│   │   └── health.py        # 健康检查 API
-│   ├── cache/           # 缓存模块
-│   │   └── redis_cache.py   # Redis 缓存
-│   ├── config/          # 配置文件
-│   │   ├── model_config.py      # 模型配置
-│   │   ├── middleware_config.py # 中间件配置
-│   │   └── rag_config.py        # RAG 配置
-│   ├── core/            # 核心逻辑
-│   │   ├── bazi_calculator.py   # 八字计算
-│   │   ├── tarot_data.py        # 塔罗数据
-│   │   └── city_coords.py       # 城市坐标
-│   ├── graph/           # 图谱模块
-│   │   ├── bazi_graph.py    # 八字图谱
-│   │   ├── tarot_graph.py   # 塔罗图谱
-│   │   └── state_manager.py # 状态管理
-│   ├── llm/             # 大语言模型
-│   │   ├── dashscope_llm.py # 阿里云 DashScope
-│   │   └── base.py          # LLM 基类
-│   ├── memory/          # 记忆模块
-│   │   └── memory_manager.py # 记忆管理
-│   ├── middleware/      # 中间件
-│   │   ├── logging_middleware.py # 日志中间件
-│   │   ├── rate_limit.py         # 限流中间件
-│   │   └── timeout.py            # 超时中间件
-│   ├── prompts/         # 提示词
-│   │   ├── chat_prompt.py   # 聊天提示词
-│   │   ├── report_prompt.py # 报告提示词
-│   │   └── safety_prompt.py # 安全提示词
-│   ├── rag/             # RAG 模块
-│   │   ├── bm25_retriever.py  # BM25 检索器
-│   │   ├── hybrid_retriever.py # 混合检索器
-│   │   ├── reranker.py        # 重排序
-│   │   └── vector_store.py    # 向量存储
-│   ├── skills/          # 技能模块
-│   │   ├── context_skill.py   # 上下文技能
-│   │   ├── conversation_skill # 对话技能
-│   │   └── memory_skill.py    # 记忆技能
-│   └── storage/         # 存储模块
-│       ├── file_storage.py  # 文件存储
-│       └── async_storage.py # 异步存储
-├── data/                # 数据文件
-├── static/              # 静态文件
-└── tests/               # 测试文件
+│   ├── agents/        # 八字与塔罗智能体封装
+│   ├── api/           # FastAPI 路由、流式接口、健康检查
+│   ├── config/        # 模型、RAG、运行参数配置
+│   ├── core/          # 八字计算、排盘技能、分词与上下文预算
+│   ├── graph/         # LangGraph 节点、状态与工作流
+│   ├── llm/           # LLM 抽象层与 DashScope 适配器
+│   ├── prompts/       # 提示词注册与复用
+│   ├── rag/           # 知识处理、检索器、相关性过滤
+│   └── safety/        # 安全审核与场景策略
+├── static/            # 浏览器端交互页面
+├── tests/             # 核心能力和 API 回归测试
+├── docs/              # BaziChartSkill 设计、API、使用与基准说明
+└── scripts/           # 辅助脚本与基准测试
 ```
 
-## 高可用特性
+本地运行产生的浏览器配置、缓存、私有记忆、知识库索引和 `.env` 不应提交到 GitHub。
 
-- **Redis 缓存**：使用 Redis 进行高性能缓存
-- **限流中间件**：防止系统过载
-- **超时控制**：避免请求长时间挂起
-- **降级策略**：系统故障时提供降级服务
-- **熔断机制**：防止雪崩效应
+## 环境要求
+
+- Python 3.10+，推荐 Python 3.11。
+- DashScope API Key，用于 Qwen 模型调用。
+- Windows、macOS 或 Linux 均可运行；以下示例以 PowerShell 为主。
+
+## 快速开始
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+编辑 `.env`，至少设置：
+
+```env
+DASHSCOPE_API_KEY=your_dashscope_api_key_here
+QWEN_API_KEY=${DASHSCOPE_API_KEY}
+QWEN_MODEL=qwen3.5-plus
+```
+
+启动服务：
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+打开：
+
+```text
+http://localhost:8000
+```
+
+健康检查：
+
+```text
+GET http://localhost:8000/health
+```
+
+## 常用 API
+
+| 场景 | 方法与路径 | 说明 |
+| --- | --- | --- |
+| 八字分析 | `POST /api/bazi/analyze` | 返回完整八字分析结果 |
+| 八字流式分析 | `POST /api/bazi/stream` | SSE 返回进度与结果 |
+| 八字续问 | `POST /api/bazi/followup` | 基于会话上下文继续问答 |
+| 排盘技能 | `POST /api/bazi/chart` | 返回结构化 BaziChartSkill 排盘 |
+| 塔罗分析 | `POST /api/tarot/analyze` | 返回塔罗抽牌与解释 |
+| 塔罗流式分析 | `POST /api/tarot/stream` | SSE 返回塔罗分析过程 |
+| 塔罗续问 | `POST /api/tarot/followup` | 基于塔罗会话继续问答 |
+
+FastAPI 自动文档：
+
+```text
+http://localhost:8000/docs
+```
+
+## RAG 知识库
+
+项目支持从本地知识文件构建检索索引。默认配置在 `.env.example` 和 `src/config/rag_config.py` 中维护。
+
+常见配置项：
+
+```env
+RAG_ENABLED=true
+RAG_RETRIEVAL_TOP_K=8
+RAG_RERANK_TOP_K=4
+RAG_VERSION_NAMESPACE=default
+```
+
+知识库原文、向量索引和运行缓存通常包含本地数据，默认不建议提交。
+
+## 测试
+
+推荐使用项目虚拟环境运行核心回归测试：
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests\test_bazi_calendar_accuracy.py tests\test_bazi_chart_skill.py tests\test_bazi_chart_api.py tests\test_context_budget.py tests\test_model_config.py tests\test_rag_relevance.py tests\test_streaming_api.py tests\test_tokenizer_abstraction.py -q
+```
+
+也可以运行全部测试：
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+## 发布说明
+
+本次发布只建议提交必要文件：
+
+- 源码：`src/agents`、`src/api`、`src/config`、`src/core`、`src/graph`、`src/llm`、`src/prompts`、`src/rag`、`src/safety`。
+- 前端：`static/index.html`。
+- 配置：`.env.example`、`pyproject.toml`、`requirements.txt`。
+- 测试：核心 API、排盘技能、上下文预算、模型配置、RAG 相关性和流式输出测试。
+- 文档：BaziChartSkill 的 API、设计、使用和基准说明。
+
+不发布本地隐私或运行数据，例如 `.env`、`data/memory`、`src/data/memory`、`.edge-profile*`、`.obsidian`、`.workbuddy`、`knowledge_base`、`chroma_db`、`logs`、缓存目录和个人面试资料。
 
 ## 许可证
 

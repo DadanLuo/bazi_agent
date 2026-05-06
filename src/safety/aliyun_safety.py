@@ -32,6 +32,8 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum
 
+from config.settings import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -172,7 +174,7 @@ class AliyunTextSafetyClient:
         self,
         access_key_id: str = None,
         access_key_secret: str = None,
-        endpoint: str = "green-cip.cn-shanghai.aliyuncs.com",
+        endpoint: Optional[str] = None,
     ):
         """
         ==============================================================================
@@ -187,42 +189,25 @@ class AliyunTextSafetyClient:
             access_key_secret (str): 阿里云 AccessKey Secret
             endpoint (str): API 端点，默认为上海区域
         
-        环境变量：
-            - DASHSCOPE_API_KEY: 用作 AccessKey ID（备选）
-            - ALIYUN_ACCESS_KEY_SECRET: AccessKey Secret
+        配置要求：
+            - 统一 config 中的 ALIYUN_ACCESS_KEY_ID / ALIYUN_ACCESS_KEY_SECRET
+            - 如未显式配置 AccessKey ID，兼容回退到 QWEN_API_KEY / DASHSCOPE_API_KEY
         
         ==============================================================================
         """
-        self.access_key_id = access_key_id or self._get_env("DASHSCOPE_API_KEY")
-        self.access_key_secret = access_key_secret or self._get_env("ALIYUN_ACCESS_KEY_SECRET")
-        self.endpoint = endpoint
+        self.access_key_id = access_key_id or settings.resolved_aliyun_access_key_id
+        self.access_key_secret = access_key_secret or settings.resolved_aliyun_access_key_secret
+        self.endpoint = endpoint or settings.resolved_aliyun_green_endpoint
         
         # 检查是否配置了必要的凭据
         if not self.access_key_id or not self.access_key_secret:
             logger.warning(
                 "⚠️ 阿里云内容安全API凭据未配置，将跳过远程审核。"
-                "请设置 ALIYUN_ACCESS_KEY_ID 和 ALIYUN_ACCESS_KEY_SECRET 环境变量"
+                "请在 config/.env 中设置 ALIYUN_ACCESS_KEY_ID 和 ALIYUN_ACCESS_KEY_SECRET"
             )
             self._enabled = False
         else:
             self._enabled = True
-    
-    def _get_env(self, key: str) -> Optional[str]:
-        """
-        ==============================================================================
-        从环境变量获取值
-        ==============================================================================
-        
-        参数说明：
-            key (str): 环境变量名称
-        
-        返回值：
-            Optional[str]: 环境变量值，如果不存在则返回 None
-        
-        ==============================================================================
-        """
-        import os
-        return os.getenv(key)
     
     def _generate_auth_headers(
         self,

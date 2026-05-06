@@ -17,7 +17,6 @@
 ==============================================================================
 """
 
-import os
 import chromadb
 from typing import List, Dict, Any
 import dashscope
@@ -27,8 +26,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 导入自定义模块
+from config.settings import settings
 from src.config.rag_config import rag_config
 from src.rag.metadata_extractor import extract_metadata
+from src.rag.relevance import should_keep_sub_topic
 from src.rag.term_normalizer import normalize
 
 
@@ -68,11 +69,11 @@ class KnowledgeRetriever:
         参数说明：
             chroma_path (str): ChromaDB 数据库存储路径
         
-        环境变量：
-            - DASHSCOPE_API_KEY: 阿里云 DashScope API Key（用于文本向量 API）
-        
+        配置要求：
+            - 在统一 config 中配置 Embedding API Key（兼容 QWEN_API_KEY / DASHSCOPE_API_KEY）
+
         异常：
-            EnvironmentError: 如果 DASHSCOPE_API_KEY 未配置
+            EnvironmentError: 如果 Embedding API Key 未配置
         
         ==============================================================================
         """
@@ -96,9 +97,9 @@ class KnowledgeRetriever:
         )
 
         # 配置 API
-        self.api_key = os.getenv("DASHSCOPE_API_KEY")
+        self.api_key = settings.resolved_embedding_api_key
         if not self.api_key:
-            raise EnvironmentError("未设置 DASHSCOPE_API_KEY")
+            raise EnvironmentError("未设置 Embedding API Key，请在 config 中配置")
         dashscope.api_key = self.api_key
 
     def get_embedding(self, text: str) -> List[float]:
@@ -132,7 +133,7 @@ class KnowledgeRetriever:
             else:
                 raise RuntimeError(f"Embedding API 错误: {response.code}")
         except Exception as e:
-            print(f"❌ 获取向量失败: {e}")
+            logger.error("获取向量失败: %s", e)
             return []
 
     def search(self, query: str, top_k: int = 5, where: Dict = None) -> List[Dict[str, Any]]:
@@ -245,7 +246,7 @@ class KnowledgeRetriever:
             add_equals_predicate("topic", topic)
 
         sub_topic = metadata.get("sub_topic")
-        if sub_topic and sub_topic != "general":
+        if should_keep_sub_topic(topic, sub_topic):
             add_equals_predicate("sub_topic", sub_topic)
 
         keywords = metadata.get("keywords", [])

@@ -24,10 +24,16 @@
 """
 
 import logging
-from typing import Dict, Any, List
+from typing import Any, AsyncIterator, Dict, List
 
 from src.agents.base import BaseAgent, SlotSchema
 from src.core.contracts import UnifiedSession
+from src.core.context_budget import (
+    ContextBudgetAllocator,
+    ContextModule,
+    get_followup_ratios,
+)
+from src.config.model_config import get_default_model_config
 from src.prompts.registry import PromptRegistry, TAROT_CONSTRAINTS
 
 logger = logging.getLogger(__name__)
@@ -282,15 +288,85 @@ class TarotAgent(BaseAgent):
         """
         from src.dependencies import llm
 
-        # 构建塔罗上下文：从 session 中提取占卜结果
-        tarot_context = self._build_tarot_context(session)
+        prompt = self._build_followup_prompt(session, query, llm)
+        if isinstance(prompt, str) and prompt.startswith("目前还没有占卜记录"):
+            return prompt
+        if not llm:
+            return "抱歉，LLM 服务暂时不可用，请稍后再试。"
+        return await llm.acall(prompt)
 
-        if not tarot_context:
+    async def stream_followup(
+        self,
+        session: UnifiedSession,
+        query: str,
+    ) -> AsyncIterator[str]:
+        from src.dependencies import llm
+
+        prompt = self._build_followup_prompt(session, query, llm)
+        if isinstance(prompt, str) and prompt.startswith("目前还没有占卜记录"):
+            yield prompt
+            return
+        if not llm:
+            yield "抱歉，LLM 服务暂时不可用，请稍后再试。"
+            return
+
+        async for chunk in llm.astream(prompt):
+            if chunk:
+                yield chunk
+
+    def _build_followup_prompt(self, session: UnifiedSession, query: str, llm_instance) -> str:
+        tarot_context = self._build_tarot_context(session)
+        history_context = self._build_history_context(session, query)
+
+        if not tarot_context and not history_context:
             return "目前还没有占卜记录，请先进行一次塔罗牌占卜吧。"
 
-        # 使用 PromptRegistry 渲染提示词
-        prompt = PromptRegistry.render("tarot_follow_up", tarot_context=tarot_context, query=query)
-        return await llm.acall(prompt)
+        strategy_name = session.metadata.context_strategy or "FULL_CONTEXT"
+        ratios = get_followup_ratios(strategy_name)
+        prompt_overhead = PromptRegistry.render("tarot_follow_up", tarot_context="", query=query)
+        fallback_model = get_default_model_config()
+        allocator = ContextBudgetAllocator.for_llm(llm_instance) if llm_instance else ContextBudgetAllocator(
+            model_name=fallback_model.model_name,
+            context_window=fallback_model.context_window,
+            reserved_output_tokens=fallback_model.max_tokens,
+        )
+        allocation = allocator.allocate(
+            modules=[
+                ContextModule(
+                    name="structured_context",
+                    content=tarot_context,
+                    ratio=ratios["structured_context"],
+                    strategy="structured_context",
+                    preserve_domains=True,
+                    priority=10,
+                ),
+                ContextModule(
+                    name="recent_history",
+                    content=history_context,
+                    ratio=ratios["recent_history"],
+                    strategy="recent_history",
+                    preserve_domains=True,
+                    priority=20,
+                ),
+            ],
+            prompt_overhead_text=prompt_overhead,
+            strategy_name=strategy_name,
+        )
+        prompt_result = allocation.finalize_prompt(
+            lambda module_texts: PromptRegistry.render(
+                "tarot_follow_up",
+                tarot_context="\n\n".join(
+                    part
+                    for part in [
+                        module_texts.get("structured_context", ""),
+                        module_texts.get("recent_history", ""),
+                    ]
+                    if part.strip()
+                ),
+                query=query,
+            )
+        )
+        return prompt_result.prompt_text
 
     @staticmethod
     def _build_tarot_context(session: UnifiedSession) -> str:
@@ -342,6 +418,28 @@ class TarotAgent(BaseAgent):
 
         # 综合解读
         if cache.synthesis:
-            parts.append(f"\n【综合解读】\n{cache.synthesis[:3000]}")
+            parts.append(f"\n【综合解读】\n{cache.synthesis}")
 
         return "\n".join(parts)
+
+    @staticmethod
+    def _build_history_context(session: UnifiedSession, current_query: str) -> str:
+        """构建塔罗历史上下文候选。"""
+        if not session.messages:
+            return ""
+
+        messages = session.messages[-10:]
+        if messages:
+            latest = messages[-1]
+            latest_role = latest.role if isinstance(latest.role, str) else latest.role.value
+            if latest_role == "user" and latest.content.strip() == current_query.strip():
+                messages = messages[:-1]
+
+        if not messages:
+            return ""
+
+        lines = ["【追问历史】"]
+        for message in messages:
+            role = message.role if isinstance(message.role, str) else message.role.value
+            lines.append(f"{role}: {message.content}")
+        return "\n".join(lines)

@@ -27,6 +27,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from src.api.bazi_api import router as bazi_router
+from src.api.bazi_chart_api import router as bazi_chart_router
 from src.api.health import router as health_router
 from src.api.tarot_api import router as tarot_router
 from src.core.engine.bazi_calculator import BaziCalculator
@@ -129,6 +130,7 @@ if STATIC_DIR.exists():
 
 # 八字分析 API
 app.include_router(bazi_router)
+app.include_router(bazi_chart_router)
 app.include_router(tarot_router)
 
 # 健康检查 API

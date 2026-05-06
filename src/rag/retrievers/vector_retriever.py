@@ -24,7 +24,6 @@
 """
 
 import logging
-import os
 from typing import List, Dict, Any, Optional
 
 import dashscope
@@ -32,6 +31,7 @@ from chromadb import Client
 from chromadb.config import Settings
 from dashscope import TextEmbedding
 
+from config.settings import settings
 from src.config.rag_config import rag_config
 from src.rag.agentic.state import Document
 
@@ -72,7 +72,7 @@ class VectorRetriever:
         self.chroma_path = chroma_path or rag_config.chroma_persist_dir
         self.collection_name = collection_name or rag_config.collection_name
         self.embedding_model = rag_config.embedding_model
-        self.api_key = os.getenv("DASHSCOPE_API_KEY")
+        self.api_key = settings.resolved_embedding_api_key
         if self.api_key:
             dashscope.api_key = self.api_key
         self.client = Client(Settings(
@@ -149,7 +149,7 @@ class VectorRetriever:
         ==============================================================================
         """
         if not self.api_key:
-            raise RuntimeError("未设置 DASHSCOPE_API_KEY")
+            raise RuntimeError("未设置 Embedding API Key，请在 config 中配置")
 
         response = TextEmbedding.call(
             model=self.embedding_model,

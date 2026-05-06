@@ -25,10 +25,16 @@
 """
 
 import logging
-from typing import Dict, Any, List
+from typing import Any, AsyncIterator, Dict, List
 
 from src.agents.base import BaseAgent, SlotSchema
 from src.core.contracts import UnifiedSession
+from src.core.context_budget import (
+    ContextBudgetAllocator,
+    ContextModule,
+    get_followup_ratios,
+)
+from src.config.model_config import get_default_model_config
 from src.core.city_coords import resolve_city_coords
 from src.prompts.registry import PromptRegistry, BAZI_CONSTRAINTS
 
@@ -319,41 +325,104 @@ class BaziAgent(BaseAgent):
         
         ==============================================================================
         """
-        from src.dependencies import llm, retriever
+        from src.dependencies import llm
 
-        # RAG 检索：从知识库中检索相关命理知识
+        prompt = self._build_followup_prompt(session, query, llm)
+        if llm:
+            return await llm.acall(prompt)
+        return "抱歉，LLM 服务暂时不可用，请稍后再试。"
+
+    async def stream_followup(
+        self,
+        session: UnifiedSession,
+        query: str,
+    ) -> AsyncIterator[str]:
+        from src.dependencies import llm
+
+        prompt = self._build_followup_prompt(session, query, llm)
+        if not llm:
+            yield "抱歉，LLM 服务暂时不可用，请稍后再试。"
+            return
+
+        async for chunk in llm.astream(prompt):
+            if chunk:
+                yield chunk
+
+    # ---- 内部辅助方法 ----
+
+    def _build_followup_prompt(self, session: UnifiedSession, query: str, llm_instance) -> str:
+        from src.dependencies import retriever
+
         retrieval_context = ""
         try:
             if retriever:
-                docs = retriever.search(query, top_k=3)
+                docs = retriever.search(query, top_k=5)
                 if docs:
-                    retrieval_context = "\n【相关知识】\n" + "\n".join([
-                        doc.get("content", "")[:500] for doc in docs[:3]
+                    retrieval_context = "\n【相关知识】\n" + "\n\n".join([
+                        f"{idx}. {doc.get('content', '')}"
+                        for idx, doc in enumerate(docs[:5], start=1)
                     ])
         except Exception as e:
             logger.warning(f"RAG 检索失败: {e}")
 
-        # 构建八字上下文：从 session 中提取四柱数据
         bazi_context = self._build_bazi_context(session)
+        history_context = self._build_history_context(session, query)
 
-        # 构建对话历史上下文（简化版，不使用 ConversationSummarizer）
-        history_context = ""
-        if session.messages:
-            recent_messages = session.messages[-6:]  # 保留最近 6 条消息
-            history_context = "\n【对话历史】\n" + "\n".join([
-                f"{m.role}: {m.content[:200]}" for m in recent_messages
-            ])
-
-        # 使用 PromptRegistry 渲染提示词
-        full_context = retrieval_context + bazi_context + history_context
-        prompt = PromptRegistry.render("follow_up", context=full_context, query=query)
-
-        if llm:
-            return await llm.acall(prompt)
-        else:
-            return "抱歉，LLM 服务暂时不可用，请稍后再试。"
-
-    # ---- 内部辅助方法 ----
+        strategy_name = session.metadata.context_strategy or "FULL_CONTEXT"
+        ratios = get_followup_ratios(strategy_name)
+        prompt_overhead = PromptRegistry.render("follow_up", context="", query=query)
+        fallback_model = get_default_model_config()
+        allocator = ContextBudgetAllocator.for_llm(llm_instance) if llm_instance else ContextBudgetAllocator(
+            model_name=fallback_model.model_name,
+            context_window=fallback_model.context_window,
+            reserved_output_tokens=fallback_model.max_tokens,
+        )
+        allocation = allocator.allocate(
+            modules=[
+                ContextModule(
+                    name="structured_context",
+                    content=bazi_context,
+                    ratio=ratios["structured_context"],
+                    strategy="structured_context",
+                    preserve_domains=True,
+                    priority=10,
+                ),
+                ContextModule(
+                    name="retrieval_context",
+                    content=retrieval_context,
+                    ratio=ratios["retrieval_context"],
+                    strategy="rag_documents",
+                    preserve_domains=True,
+                    priority=20,
+                ),
+                ContextModule(
+                    name="recent_history",
+                    content=history_context,
+                    ratio=ratios["recent_history"],
+                    strategy="recent_history",
+                    preserve_domains=True,
+                    priority=30,
+                ),
+            ],
+            prompt_overhead_text=prompt_overhead,
+            strategy_name=strategy_name,
+        )
+        prompt_result = allocation.finalize_prompt(
+            lambda module_texts: PromptRegistry.render(
+                "follow_up",
+                context="\n\n".join(
+                    part
+                    for part in [
+                        module_texts.get("retrieval_context", ""),
+                        module_texts.get("structured_context", ""),
+                        module_texts.get("recent_history", ""),
+                    ]
+                    if part.strip()
+                ),
+                query=query,
+            )
+        )
+        return prompt_result.prompt_text
 
     @staticmethod
     def _build_bazi_context(session: UnifiedSession) -> str:
@@ -411,8 +480,30 @@ class BaziAgent(BaseAgent):
 
         result = f"\n\n--- 用户八字分析结果 ---\n{bazi_info}"
         if report_text:
-            result += f"\n\n--- AI 分析报告 ---\n{report_text[:5000]}"
+            result += f"\n\n--- AI 分析报告 ---\n{report_text}"
         return result
+
+    @staticmethod
+    def _build_history_context(session: UnifiedSession, current_query: str) -> str:
+        """构建历史消息候选上下文，由预算器再做最终裁剪。"""
+        if not session.messages:
+            return ""
+
+        messages = session.messages[-12:]
+        if messages:
+            latest = messages[-1]
+            latest_role = latest.role if isinstance(latest.role, str) else latest.role.value
+            if latest_role == "user" and latest.content.strip() == current_query.strip():
+                messages = messages[:-1]
+
+        if not messages:
+            return ""
+
+        lines = ["【对话历史】"]
+        for message in messages:
+            role = message.role if isinstance(message.role, str) else message.role.value
+            lines.append(f"{role}: {message.content}")
+        return "\n".join(lines)
 
     # 注意：已移除 _build_context_compat 方法
     # 该方法依赖不存在的 ContextSkill 模块，现已直接在 handle_followup 中构建上下文

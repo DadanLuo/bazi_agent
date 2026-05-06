@@ -68,7 +68,7 @@ def _check_llm() -> Dict[str, Any]:
         if not llm:
             return {"status": "unavailable", "message": "LLM 未初始化"}
         if not llm.api_key:
-            return {"status": "degraded", "message": "DASHSCOPE_API_KEY 未配置"}
+            return {"status": "degraded", "message": "LLM API Key 未配置"}
         return {"status": "healthy"}
     except Exception as e:
         return {"status": "unhealthy", "message": str(e)}
