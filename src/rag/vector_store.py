@@ -6,14 +6,21 @@ from typing import List, Dict, Any
 import chromadb
 from chromadb.config import Settings
 
+from src.config.rag_config import rag_config
+
 
 class VectorStore:
-    def __init__(self, persist_directory: str = "chroma_db"):
-        self.persist_directory = persist_directory
-        self.client = chromadb.PersistentClient(path=persist_directory)
+    def __init__(
+        self,
+        persist_directory: str | None = None,
+        collection_name: str | None = None,
+    ):
+        self.persist_directory = persist_directory or rag_config.chroma_persist_dir
+        self.collection_name = collection_name or rag_config.collection_name
+        self.client = chromadb.PersistentClient(path=self.persist_directory)
         self.collection = self.client.get_or_create_collection(
-            name="bazi_knowledge",
-            metadata={"hnsw:space": "cosine"}
+            name=self.collection_name,
+            metadata=rag_config.collection_metadata,
         )
 
     def build_from_processed_file(self, processed_file: str = "knowledge_base/processed/all_chunks.json"):
@@ -62,6 +69,7 @@ class VectorStore:
 
         print(f"✅ 向量库构建完成，共 {total_count} 条记录")
         print(f"✅ 持久化路径: {self.persist_directory}")
+        print(f"✅ 当前集合: {self.collection_name}")
 
     def query(self, query_embedding: List[float], n_results: int = 3) -> Dict[str, Any]:
         """执行向量检索"""

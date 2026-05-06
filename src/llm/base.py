@@ -3,22 +3,28 @@
 import asyncio
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class LLMConfig(BaseModel):
     """LLM 配置"""
-    model_name: str = "qwen-plus-latest"
-    max_tokens: int = 16384
-    temperature: float = 0.7
-    timeout: int = 120
-    max_retries: int = 1
+    model_name: Optional[str] = None
+    max_tokens: Optional[int] = None
+    context_window: Optional[int] = None
+    temperature: Optional[float] = None
+    timeout: Optional[int] = None
+    max_retries: Optional[int] = None
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+    provider: str = "dashscope-compatible"
+    tokenizer_model: Optional[str] = None
+    extra_body: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ToolCallResult(BaseModel):
     """Tool calling 返回结构"""
     content: Optional[str] = None          # 文本回复（无 tool call 时）
-    tool_calls: List[Dict[str, Any]] = []  # tool call 列表
+    tool_calls: List[Dict[str, Any]] = Field(default_factory=list)  # tool call 列表
     finish_reason: str = "stop"            # stop / tool_calls
 
     @property

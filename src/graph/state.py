@@ -22,6 +22,7 @@ class BaziAgentState(TypedDict, total=False):
     # ✨ 新增字段
     knowledge_context: Optional[str]  # RAG检索到的知识上下文
     retrieved_docs: Optional[List[Dict]]  # 检索到的文档列表
+    rag_info: Optional[Dict[str, Any]]  # 前端可直接消费的 RAG 信息
     llm_response: Optional[str]  # LLM生成的回复
 
     final_report: Optional[Dict[str, Any]]  # 最终报告
