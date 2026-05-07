@@ -13,7 +13,7 @@
 import asyncio
 import logging
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict, Any, Optional, Literal
 
 from src.agents.bazi_agent import BaziAgent
@@ -64,18 +64,18 @@ class BaziInput(BaseModel):
         latitude: 纬度（可选，用于精确计算）
         longitude: 经度（可选，用于精确计算）
     """
-    year: int
-    month: int
-    day: int
-    hour: int
-    gender: str
-    minute: int = 0
-    timezone: str = "Asia/Shanghai"
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    year: int = Field(..., ge=1900, le=2100)
+    month: int = Field(..., ge=1, le=12)
+    day: int = Field(..., ge=1, le=31)
+    hour: int = Field(..., ge=0, le=23)
+    gender: str = Field(..., min_length=1)
+    minute: int = Field(default=0, ge=0, le=59)
+    timezone: str = Field(default="Asia/Shanghai", min_length=1)
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
     analysis_mode: Literal["full", "simple"] = "full"
     conversation_id: Optional[str] = None
-    user_id: str = "web_user"
+    user_id: str = Field(default="web_user", min_length=1)
 
 
 class FollowupInput(BaseModel):

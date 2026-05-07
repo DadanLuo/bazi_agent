@@ -38,7 +38,9 @@ from src.rag.relevance import (
     score_rag_doc,
     select_rag_documents,
 )
+from src.graph.report_trace import attach_traceability
 from src.llm.dashscope_llm import DashScopeLLM
+from src.safety.disclaimer import build_safety_policy
 from src.safety.safety import SafetyChecker, SafetyInput, SafetyLevel
 from src.safety.scene_strategy import SceneType
 
@@ -686,9 +688,14 @@ def retrieve_knowledge_node(state: BaziAgentState) -> Dict[str, Any]:
         cleaned_docs = []
         for doc in unique_docs:
             cleaned_doc = {
+                "evidence_id": f"rag-{len(cleaned_docs) + 1}",
                 "content": doc.get("content", ""),
                 "metadata": doc.get("metadata", {}),
                 "distance": doc.get("distance"),
+                "route": doc.get("_route"),
+                "route_weight": doc.get("_route_weight"),
+                "tokens": doc.get("_tokens", []),
+                "score": doc.get("_score"),
             }
             cleaned_docs.append(cleaned_doc)
 
@@ -865,6 +872,7 @@ def generate_report_node(state: BaziAgentState) -> Dict[str, Any]:
                 "doc_count": 0
             })
         }
+        attach_traceability(report, state)
         logger.info("✅ 最终报告组装完成")
         return {
             "final_report": report,
@@ -967,6 +975,9 @@ def safety_check_node(state: BaziAgentState) -> Dict[str, Any]:
             }
     
     # 通过安全检查
+    if isinstance(final_output, dict):
+        final_output = final_output.copy()
+        final_output["safety_policy"] = build_safety_policy(SceneType.BAZI)
     safe_output = {
         "message": "分析完成",
         "data": final_output,

@@ -30,6 +30,7 @@ from src.api.bazi_api import router as bazi_router
 from src.api.bazi_chart_api import router as bazi_chart_router
 from src.api.health import router as health_router
 from src.api.tarot_api import router as tarot_router
+from config.settings import settings
 from src.core.engine.bazi_calculator import BaziCalculator
 from src.config.middleware_config import middleware_config
 
@@ -78,10 +79,17 @@ app.add_middleware(
 )
 
 # 4. CORS 中间件
+if (
+    middleware_config.CORS_ALLOW_CREDENTIALS
+    and "*" in middleware_config.CORS_ALLOW_ORIGINS
+    and settings.is_production
+):
+    raise RuntimeError("CORS_ALLOW_ORIGINS cannot be '*' when credentials are enabled in production.")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境中应限制为特定域名
-    allow_credentials=True,
+    allow_origins=middleware_config.CORS_ALLOW_ORIGINS,
+    allow_credentials=middleware_config.CORS_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

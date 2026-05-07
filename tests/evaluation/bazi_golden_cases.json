@@ -1,0 +1,80 @@
+[
+  {
+    "id": "solar-term-boundary-2002-10-12-2131-shanghai",
+    "description": "Existing regression case near solar-term boundary with exact four pillars.",
+    "tags": ["solar_term", "night_hour", "asia_shanghai"],
+    "request": {
+      "year": 2002,
+      "month": 10,
+      "day": 12,
+      "hour": 21,
+      "minute": 31,
+      "gender": "男",
+      "timezone": "Asia/Shanghai",
+      "analysis_depth": "详细"
+    },
+    "expected": {
+      "four_pillars": {
+        "year": "壬午",
+        "month": "庚戌",
+        "day": "癸丑",
+        "hour": "癸亥"
+      },
+      "metadata": {
+        "degraded": false
+      }
+    }
+  },
+  {
+    "id": "fixed-offset-2002-10-12-2131-utc8",
+    "description": "Same instant format using fixed UTC offset and English gender/depth aliases.",
+    "tags": ["fixed_offset", "gender_alias", "depth_alias"],
+    "request": {
+      "birth_datetime": "2002-10-12T21:31:00",
+      "gender": "male",
+      "timezone": "+08:00",
+      "analysis_depth": "basic"
+    },
+    "expected": {
+      "request": {
+        "gender": "男",
+        "analysis_depth": "基础"
+      },
+      "timing": {
+        "timezone": "UTC+08:00"
+      },
+      "four_pillars": {
+        "month": "庚戌"
+      },
+      "metadata": {
+        "degraded": false
+      }
+    }
+  },
+  {
+    "id": "leap-lunar-month-2020-05-23-beijing",
+    "description": "Leap lunar month metadata and city coordinate resolution.",
+    "tags": ["leap_month", "location", "professional_depth"],
+    "request": {
+      "year": 2020,
+      "month": 5,
+      "day": 23,
+      "hour": 12,
+      "minute": 0,
+      "gender": "女",
+      "timezone": "Asia/Shanghai",
+      "location": "北京",
+      "analysis_depth": "专业"
+    },
+    "expected": {
+      "timing": {
+        "lunar_is_leap_month": true,
+        "location_longitude": 116.4
+      },
+      "liunian_count": 10,
+      "metadata": {
+        "degraded": false
+      }
+    }
+  }
+]

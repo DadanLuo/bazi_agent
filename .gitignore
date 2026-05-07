@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 数据库
+*.db
+chroma_db/
+
+# 日志
+*.log
+logs/
+
+# 临时文件
+tmp/
+temp/
+
+# 文档输出
+report_output.md
+
+# 配置文件（如果包含敏感信息）
+config/*.json
+config/*.yaml
+config/*.yml
+
+# 脚本输出
+scripts/*.output
+scripts/*.result
+
+# 特定文件
+debug_response.py
+test_bazi_api.py
+test_core_functions.py
+view_report.py
+
+# 其他
+.DS_Store
+Thumbs.db
+/evaluation/
+/knowledge_base/
+
+/code.md
+/test.json
+/.env
+/code企业级.md
+/debug_response.py
+/prompt.txt
+# README.md - 项目说明文件（已启用）
+/report_output.md
+/test_bazi_api.py
+/test_core_functions.py
+/treelist.txt
+/view_report.py
+/desktop.ini
+/scripts/iew_dedup_report.py
+/scripts/setup_knowledge_base.py
+/scripts/verify_setup.sh
+/scripts/verify_structure.py
+
+# Local runtime state and private user data
+.edge-profile*/
+.obsidian/
+.workbuddy/
+data/memory/
+src/data/memory/
+*.sqlite
+*.sqlite3
+
+# Local interview and planning material
+bazi_interview_notes/
+PROJECT_FOR_RESUME.md
+/plans/
+/skill-library/

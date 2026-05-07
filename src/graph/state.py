@@ -2,8 +2,7 @@
 LangGraph 状态定义
 使用 TypedDict 而非 Pydantic BaseModel
 """
-from typing import Dict, Any, Optional, TypedDict
-from typing import Dict, Any, Optional, TypedDict, List
+from typing import Any, Dict, List, Optional, TypedDict
 
 
 class BaziAgentState(TypedDict, total=False):
@@ -24,6 +23,7 @@ class BaziAgentState(TypedDict, total=False):
     retrieved_docs: Optional[List[Dict]]  # 检索到的文档列表
     rag_info: Optional[Dict[str, Any]]  # 前端可直接消费的 RAG 信息
     llm_response: Optional[str]  # LLM生成的回复
+    traceability: Optional[Dict[str, Any]]  # report provenance for engine/RAG/LLM output
 
     final_report: Optional[Dict[str, Any]]  # 最终报告
     safe_output: Optional[Dict[str, Any]]  # 安全输出
