@@ -10,6 +10,8 @@
 from typing import Dict, List, Set
 import re
 
+from src.rag.domain_lexicon import get_domain_lexicon
+
 
 # ===== 核心术语映射 =====
 # 只保留真正有价值的同义词/变体词
@@ -277,32 +279,24 @@ def normalize(text: str) -> str:
     Returns:
         标准化后的文本
     """
-    # 1. 处理复合术语
-    text = _normalize_compound_terms(text)
-    
-    # 2. 移除连接词
-    text = _remove_connectors(text)
-    
-    # 3. 应用核心术语映射
-    for variant, standard in TERM_VARIANTS.items():
-        text = text.replace(variant, standard)
-    
-    return text
+    return get_domain_lexicon().normalize_text(text)
 
 
 def get_variant_mapping() -> Dict[str, str]:
     """获取变体词映射"""
-    return TERM_VARIANTS.copy()
+    mapping = TERM_VARIANTS.copy()
+    mapping.update(get_domain_lexicon().alias_to_canonical)
+    return mapping
 
 
 def get_standard_terms() -> Set[str]:
     """获取所有标准术语"""
-    return KEEP_ORIGINAL.copy()
+    return KEEP_ORIGINAL | set(get_domain_lexicon().terms)
 
 
 def is_standard_term(term: str) -> bool:
     """检查是否为标准术语"""
-    return term in KEEP_ORIGINAL
+    return term in get_standard_terms()
 
 
 def extract_terms(text: str) -> List[str]:
@@ -315,18 +309,4 @@ def extract_terms(text: str) -> List[str]:
     Returns:
         提取到的术语列表
     """
-    terms = []
-    
-    # 合并所有已知术语
-    all_terms = KEEP_ORIGINAL | set(TERM_VARIANTS.keys()) | set(TERM_VARIANTS.values())
-    
-    # 按长度降序排序，优先匹配长术语
-    sorted_terms = sorted(all_terms, key=len, reverse=True)
-    
-    for term in sorted_terms:
-        if term in text:
-            terms.append(term)
-            # 避免重复匹配
-            text = text.replace(term, "", 1)
-    
-    return terms
+    return get_domain_lexicon().canonical_terms(text)

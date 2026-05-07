@@ -23,6 +23,17 @@ from .synthesizer import KnowledgeSynthesizer
 from .completer import QueryCompleter
 
 from .graph import create_agentic_rag_graph
+from .react_orchestrator import ReactRAGOrchestrator
+from .tools import (
+    AgenticRAGToolset,
+    BM25ChromaAdapter,
+    RetrievalContext,
+    RetrievalQuery,
+    build_retrieval_context,
+    expand_query,
+    evaluate_retrieval,
+    rerank_documents,
+)
 
 __all__ = [
     # 状态定义
@@ -44,4 +55,13 @@ __all__ = [
     "QueryCompleter",
     # 工作流
     "create_agentic_rag_graph",
+    "ReactRAGOrchestrator",
+    "AgenticRAGToolset",
+    "BM25ChromaAdapter",
+    "RetrievalContext",
+    "RetrievalQuery",
+    "build_retrieval_context",
+    "expand_query",
+    "evaluate_retrieval",
+    "rerank_documents",
 ]

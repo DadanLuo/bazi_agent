@@ -978,6 +978,7 @@ def safety_check_node(state: BaziAgentState) -> Dict[str, Any]:
     if isinstance(final_output, dict):
         final_output = final_output.copy()
         final_output["safety_policy"] = build_safety_policy(SceneType.BAZI)
+
     safe_output = {
         "message": "分析完成",
         "data": final_output,
@@ -1055,6 +1056,7 @@ def agentic_rag_node(state: BaziAgentState) -> Dict[str, Any]:
         result = agentic_rag_graph.invoke({
             "original_query": query,
             "current_query": query,
+            "graph_state": dict(state),
             "max_iterations": 3,
             "iteration": 0,
             "current_action": "analyze",

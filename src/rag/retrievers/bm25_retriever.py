@@ -22,6 +22,7 @@ from typing import List, Dict, Any, Optional
 from collections import defaultdict
 
 from src.rag.agentic.state import Document
+from src.rag.domain_lexicon import get_domain_lexicon
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ class BM25Retriever:
         ==============================================================================
         """
         self.documents: List[Document] = documents or []
+        self.lexicon = get_domain_lexicon()
         self.doc_freq: Dict[str, int] = defaultdict(int)  # 文档频率
         self.term_freq: List[Dict[str, int]] = []  # 词频
         self.doc_lengths: List[int] = []  # 文档长度
@@ -115,9 +117,7 @@ class BM25Retriever:
         
         ==============================================================================
         """
-        # 简单分词：按空格和标点分割
-        text = text.lower()
-        terms = re.findall(r'\w+', text)
+        terms = self.lexicon.tokenize_for_search(text)
         
         # 移除停用词
         stopwords = {
@@ -133,7 +133,7 @@ class BM25Retriever:
             'very', 's', 't', 'can', 'don', 'just', 'don', 'll', 're', 've'
         }
         
-        return [term for term in terms if term not in stopwords and len(term) > 1]
+        return [term.lower() for term in terms if term.lower() not in stopwords and len(term) > 1]
 
     def search(
         self,

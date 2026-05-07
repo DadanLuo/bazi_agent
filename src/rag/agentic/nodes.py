@@ -35,6 +35,8 @@ from src.rag.agentic.evaluator import ResultEvaluator
 from src.rag.agentic.reflection import ReflectionEngine
 from src.rag.agentic.synthesizer import KnowledgeSynthesizer
 from src.rag.agentic.completer import QueryCompleter
+from src.rag.agentic.react_orchestrator import ReactRAGOrchestrator
+from src.rag.agentic.tools import AgenticRAGToolset
 from src.rag.retriever import KnowledgeRetriever
 
 logger = logging.getLogger(__name__)
@@ -247,60 +249,31 @@ def execute_retrieval_node(state: AgenticRAGState) -> Dict[str, Any]:
                 "state": AgentState.FAILED
             }
         
-        # 获取检索参数
         tools = plan_dict.get("tools", ["vector"])
-        params = plan_dict.get("params", {})
-        top_k = params.get("top_k", 5)
-        threshold = params.get("threshold", 0.6)
-        where_filter = params.get("filter", {})
-        
-        # 执行实际检索
-        retrieved_docs = []
-        if knowledge_retriever:
-            try:
-                # 构建 where 条件（结合计划中的过滤器和查询分析的元数据）
-                where_condition = knowledge_retriever.build_where_from_query(query)
-                
-                # 合并过滤条件
-                final_where = {}
-                if where_condition:
-                    final_where.update(where_condition)
-                if where_filter:
-                    final_where.update(where_filter)
-                
-                # 执行检索
-                search_results = knowledge_retriever.search(
-                    query=query,
-                    top_k=top_k,
-                    where=final_where if final_where else None
-                )
-                
-                # 转换结果格式
-                for result in search_results:
-                    doc = {
-                        "content": result["content"],
-                        "metadata": result["metadata"],
-                        "score": 1.0 - result["distance"],  # 转换距离为相似度分数
-                        "source_type": "vector"
-                    }
-                    retrieved_docs.append(doc)
-                    
-            except Exception as e:
-                logger.error(f"实际检索失败: {e}")
-                # 回退到基本检索
-                search_results = knowledge_retriever.search(query=query, top_k=top_k)
-                for result in search_results:
-                    doc = {
-                        "content": result["content"],
-                        "metadata": result["metadata"],
-                        "score": 1.0 - result["distance"],  # 转换距离为相似度分数
-                        "source_type": "vector"
-                    }
-                    retrieved_docs.append(doc)
-        else:
-            # 如果检索器不可用，返回空结果
+        if not knowledge_retriever:
             logger.warning("知识检索器不可用")
-        
+            return {
+                "retrieved_docs": [],
+                "search_history": state.get("search_history", []),
+                "evaluation": {"need_more": True, "coverage": {}},
+                "state": AgentState.RETRIEVING,
+            }
+
+        try:
+            from src.dependencies import llm as shared_llm
+        except Exception:
+            shared_llm = None
+
+        orchestrator = ReactRAGOrchestrator(
+            llm=shared_llm,
+            toolset=AgenticRAGToolset(knowledge_retriever=knowledge_retriever),
+            max_rounds=state.get("max_iterations", 3) or 3,
+        )
+        orchestration_result = orchestrator.run(
+            query,
+            graph_state=state.get("graph_state") or {},
+        )
+        retrieved_docs = orchestration_result.get("retrieved_docs", [])
         logger.info(f"检索完成，返回 {len(retrieved_docs)} 个文档")
         
         # 更新搜索历史
@@ -310,12 +283,16 @@ def execute_retrieval_node(state: AgenticRAGState) -> Dict[str, Any]:
             "tools": tools,
             "docs_count": len(retrieved_docs),
             "timestamp": None,
-            "where_filter": where_filter  # 记录使用的过滤条件
+            "reasoning_trace": orchestration_result.get("reasoning_trace", []),
+            "tool_rounds": orchestration_result.get("tool_rounds", 0),
         })
         
         return {
             "retrieved_docs": retrieved_docs,
             "search_history": search_history,
+            "evaluation": orchestration_result.get("evaluation"),
+            "final_context": orchestration_result.get("final_context", ""),
+            "reasoning_trace": state.get("reasoning_trace", []) + orchestration_result.get("reasoning_trace", []),
             "state": AgentState.RETRIEVING
         }
         

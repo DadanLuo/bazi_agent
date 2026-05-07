@@ -295,6 +295,7 @@ class AgenticRAGState(TypedDict, total=False):
     original_query: str                   # 原始查询
     current_query: str                    # 当前查询（可能被重写）
     conversation_context: Optional[ConversationContext]  # 对话上下文
+    graph_state: Optional[Dict[str, Any]]  # 上游八字 LangGraph 完整运行时状态
     
     # 分析结果
     query_analysis: Optional[Dict[str, Any]]  # 查询分析结果
