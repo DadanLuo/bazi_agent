@@ -45,7 +45,7 @@ include = ["src*", "config*", "prompts*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "."]
+pythonpath = [".", "src"]
 asyncio_mode = "auto"
 addopts = "-v --tb=short"
 
